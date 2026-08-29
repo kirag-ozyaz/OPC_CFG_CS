@@ -37,6 +37,7 @@
     <Compile Include="DatabaseConnection.cs" />
     <Compile Include="Models\Alias.cs" />
     <Compile Include="Models\OpcGroup.cs" />
+    <Compile Include="Models\OpcType.cs" />
     <Compile Include="Models\Parameter.cs" />
     <Compile Include="Models\SchemaObject.cs" />
     <Compile Include="Models\Server.cs" />

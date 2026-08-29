@@ -8,5 +8,6 @@ namespace OPC_CFGCS.Data.Models
         public string HostName { get; set; }
         public string ServerName { get; set; }
         public byte ServerType { get; set; }
+        public string ServerTypeName { get; set; }
     }
 }

@@ -103,9 +103,10 @@ ORDER BY s.ServerName, g.Name";
             return TryQuery(() =>
             {
                 const string sql = @"
-SELECT s.Id, s.AliasId, s.HostName, s.ServerName, s.ServerType, a.Alias
+SELECT s.Id, s.AliasId, s.HostName, s.ServerName, s.ServerType, a.Alias, t.Name
 FROM dbo.Servers s
 LEFT JOIN dbo.Alias a ON a.Id = s.AliasId
+LEFT JOIN dbo.OPC_Types t ON t.Id = s.ServerType
 ORDER BY s.ServerName";
                 var result = new List<Server>();
 
@@ -124,7 +125,8 @@ ORDER BY s.ServerName";
                                 HostName = reader.IsDBNull(2) ? null : reader.GetString(2),
                                 ServerName = reader.IsDBNull(3) ? null : reader.GetString(3),
                                 ServerType = reader.GetByte(4),
-                                AliasName = reader.IsDBNull(5) ? null : reader.GetString(5)
+                                AliasName = reader.IsDBNull(5) ? null : reader.GetString(5),
+                                ServerTypeName = reader.IsDBNull(6) ? null : reader.GetString(6).Trim()
                             });
                         }
                     }
@@ -160,6 +162,75 @@ ORDER BY s.ServerName";
 
                 return result;
             }, new List<Alias>());
+        }
+
+        public IList<OpcType> GetOpcTypes()
+        {
+            return TryQuery(() =>
+            {
+                const string sql = "SELECT Id, Name FROM dbo.OPC_Types ORDER BY Id";
+                var result = new List<OpcType>();
+
+                using (var connection = DatabaseConnection.CreateConnection())
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(new OpcType
+                            {
+                                Id = reader.GetByte(0),
+                                Name = reader.IsDBNull(1) ? null : reader.GetString(1).Trim()
+                            });
+                        }
+                    }
+                }
+
+                return result;
+            }, new List<OpcType>());
+        }
+
+        public void InsertOpcType(OpcType opcType)
+        {
+            const string sql = "INSERT INTO dbo.OPC_Types (Id, Name) VALUES (@id, @name)";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@id", SqlDbType.TinyInt).Value = opcType.Id;
+                command.Parameters.Add("@name", SqlDbType.NChar, 10).Value = opcType.Name;
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public void UpdateOpcType(OpcType opcType)
+        {
+            const string sql = "UPDATE dbo.OPC_Types SET Name = @name WHERE Id = @id";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@id", SqlDbType.TinyInt).Value = opcType.Id;
+                command.Parameters.Add("@name", SqlDbType.NChar, 10).Value = opcType.Name;
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public void DeleteOpcType(byte id)
+        {
+            const string sql = "DELETE FROM dbo.OPC_Types WHERE Id = @id";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@id", SqlDbType.TinyInt).Value = id;
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
         }
 
         public int InsertAlias(Alias alias)

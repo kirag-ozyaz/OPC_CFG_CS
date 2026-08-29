@@ -14,10 +14,13 @@ namespace OPC_CFGCS.UI.Forms
 
         private readonly TabControl _tabs = new TabControl { Dock = DockStyle.Fill };
         private readonly DataGridView _aliasesGrid = CreateGrid();
+        private readonly DataGridView _typesGrid = CreateGrid();
         private readonly DataGridView _serversGrid = CreateGrid();
         private readonly DataGridView _parametersGrid = CreateGrid();
         private readonly DataGridView _groupsGrid = CreateGrid();
         private readonly TextBox _txtAliasName = new TextBox();
+        private readonly NumericUpDown _numTypeId = new NumericUpDown { Minimum = 0, Maximum = 255, Width = 80 };
+        private readonly TextBox _txtTypeName = new TextBox { MaxLength = 10 };
         private readonly TextBox _txtServerHost = new TextBox();
         private readonly TextBox _txtServerName = new TextBox();
         private readonly ComboBox _cmbServerAlias = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
@@ -28,6 +31,7 @@ namespace OPC_CFGCS.UI.Forms
         private readonly TextBox _txtGroupName = new TextBox();
 
         private BindingList<Alias> _aliases;
+        private BindingList<OpcType> _opcTypes;
         private BindingList<Server> _servers;
         private BindingList<Parameter> _parameters;
         private BindingList<OpcGroup> _groups;
@@ -39,15 +43,11 @@ namespace OPC_CFGCS.UI.Forms
             Size = new Size(900, 560);
             MinimumSize = new Size(720, 480);
 
-            _cmbServerType.Items.AddRange(new object[]
-            {
-                new ServerTypeItem(0, "DA (данные)"),
-                new ServerTypeItem(1, "AE (события)")
-            });
-            _cmbServerType.DisplayMember = "Text";
-            _cmbServerType.ValueMember = "Value";
+            _cmbServerType.DisplayMember = "Name";
+            _cmbServerType.ValueMember = "Id";
 
             _tabs.TabPages.Add(CreateAliasesTab());
+            _tabs.TabPages.Add(CreateTypesTab());
             _tabs.TabPages.Add(CreateServersTab());
             _tabs.TabPages.Add(CreateParametersTab());
             _tabs.TabPages.Add(CreateGroupsTab());
@@ -75,6 +75,24 @@ namespace OPC_CFGCS.UI.Forms
                 OnDeleteAlias);
             page.Controls.Add(layout);
             ConfigureAliasGrid();
+            return page;
+        }
+
+        private TabPage CreateTypesTab()
+        {
+            var page = new TabPage("Типы");
+            var layout = CreateTabLayout(
+                _typesGrid,
+                new[]
+                {
+                    Tuple.Create("Id", (Control)_numTypeId),
+                    Tuple.Create("Name", (Control)_txtTypeName)
+                },
+                OnAddType,
+                OnSaveType,
+                OnDeleteType);
+            page.Controls.Add(layout);
+            ConfigureTypesGrid();
             return page;
         }
 
@@ -223,13 +241,21 @@ namespace OPC_CFGCS.UI.Forms
             _aliasesGrid.SelectionChanged += (s, e) => LoadSelectedAlias();
         }
 
+        private void ConfigureTypesGrid()
+        {
+            _typesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Id", HeaderText = "Id", Width = 50 });
+            _typesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Name", HeaderText = "Name", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
+            _typesGrid.SelectionChanged += (s, e) => LoadSelectedType();
+        }
+
         private void ConfigureServerGrid()
         {
             _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "AliasId", HeaderText = "AliasId", Width = 60 });
-            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "AliasName", HeaderText = "Alias", Width = 140 });
-            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "HostName", HeaderText = "HostName", Width = 160 });
-            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerName", HeaderText = "ServerName", Width = 160 });
-            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerType", HeaderText = "Тип", Width = 60 });
+            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "AliasName", HeaderText = "Alias", Width = 120 });
+            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "HostName", HeaderText = "HostName", Width = 140 });
+            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerName", HeaderText = "ServerName", Width = 140 });
+            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerType", HeaderText = "ServerType", Width = 70 });
+            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerTypeName", HeaderText = "Тип", Width = 90 });
             _serversGrid.SelectionChanged += (s, e) => LoadSelectedServer();
         }
 
@@ -250,14 +276,17 @@ namespace OPC_CFGCS.UI.Forms
         private void ReloadAll()
         {
             _aliases = new BindingList<Alias>(_repository.GetAliases());
+            _opcTypes = new BindingList<OpcType>(_repository.GetOpcTypes());
             _servers = new BindingList<Server>(_repository.GetServers());
             _parameters = new BindingList<Parameter>(_repository.GetParameters());
             _groups = new BindingList<OpcGroup>(_repository.GetOpcGroups());
             _aliasesGrid.DataSource = _aliases;
+            _typesGrid.DataSource = _opcTypes;
             _serversGrid.DataSource = _servers;
             _parametersGrid.DataSource = _parameters;
             _groupsGrid.DataSource = _groups;
             _cmbServerAlias.DataSource = BuildServerAliasOptions();
+            _cmbServerType.DataSource = new BindingList<OpcType>(_repository.GetOpcTypes());
             _cmbGroupServer.DataSource = new BindingList<Server>(_repository.GetServers());
         }
 
@@ -290,6 +319,11 @@ namespace OPC_CFGCS.UI.Forms
             return _aliasesGrid.CurrentRow == null ? null : _aliasesGrid.CurrentRow.DataBoundItem as Alias;
         }
 
+        private OpcType GetSelectedType()
+        {
+            return _typesGrid.CurrentRow == null ? null : _typesGrid.CurrentRow.DataBoundItem as OpcType;
+        }
+
         private Server GetSelectedServer()
         {
             return _serversGrid.CurrentRow == null ? null : _serversGrid.CurrentRow.DataBoundItem as Server;
@@ -309,6 +343,22 @@ namespace OPC_CFGCS.UI.Forms
         {
             var alias = GetSelectedAlias();
             _txtAliasName.Text = alias == null ? string.Empty : alias.Name ?? string.Empty;
+        }
+
+        private void LoadSelectedType()
+        {
+            var opcType = GetSelectedType();
+            if (opcType == null)
+            {
+                _numTypeId.Enabled = true;
+                _numTypeId.Value = 0;
+                _txtTypeName.Clear();
+                return;
+            }
+
+            _numTypeId.Enabled = false;
+            _numTypeId.Value = opcType.Id;
+            _txtTypeName.Text = opcType.Name ?? string.Empty;
         }
 
         private void LoadSelectedServer()
@@ -423,6 +473,78 @@ namespace OPC_CFGCS.UI.Forms
             }
         }
 
+        private void OnAddType(object sender, EventArgs e)
+        {
+            _typesGrid.ClearSelection();
+            _numTypeId.Enabled = true;
+            _numTypeId.Value = 0;
+            _txtTypeName.Clear();
+            _txtTypeName.Focus();
+        }
+
+        private void OnSaveType(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(_txtTypeName.Text))
+            {
+                ShowValidation("Укажите Name.");
+                return;
+            }
+
+            try
+            {
+                var existing = GetSelectedType();
+                var opcType = new OpcType
+                {
+                    Id = existing == null ? (byte)_numTypeId.Value : existing.Id,
+                    Name = _txtTypeName.Text.Trim()
+                };
+
+                if (existing == null)
+                {
+                    _repository.InsertOpcType(opcType);
+                }
+                else
+                {
+                    _repository.UpdateOpcType(opcType);
+                }
+
+                ReloadAll();
+                SelectTypeRow(opcType.Id);
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex);
+            }
+        }
+
+        private void OnDeleteType(object sender, EventArgs e)
+        {
+            var opcType = GetSelectedType();
+            if (opcType == null)
+            {
+                return;
+            }
+
+            if (MessageBox.Show(
+                "Удалить тип \"" + opcType.Name + "\" (Id=" + opcType.Id + ")?",
+                Text,
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question) != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                _repository.DeleteOpcType(opcType.Id);
+                ReloadAll();
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex);
+            }
+        }
+
         private void OnAddServer(object sender, EventArgs e)
         {
             _serversGrid.ClearSelection();
@@ -438,6 +560,12 @@ namespace OPC_CFGCS.UI.Forms
             if (string.IsNullOrWhiteSpace(_txtServerName.Text))
             {
                 ShowValidation("Укажите ServerName.");
+                return;
+            }
+
+            if (_cmbServerType.SelectedItem == null)
+            {
+                ShowValidation("Выберите тип сервера.");
                 return;
             }
 
@@ -634,23 +762,25 @@ namespace OPC_CFGCS.UI.Forms
 
         private byte GetSelectedServerType()
         {
-            var item = _cmbServerType.SelectedItem as ServerTypeItem;
-            return item == null ? (byte)0 : item.Value;
+            var item = _cmbServerType.SelectedItem as OpcType;
+            return item == null ? (byte)0 : item.Id;
         }
 
         private void SelectServerType(byte serverType)
         {
-            for (var i = 0; i < _cmbServerType.Items.Count; i++)
+            foreach (OpcType item in _cmbServerType.Items)
             {
-                var item = _cmbServerType.Items[i] as ServerTypeItem;
-                if (item != null && item.Value == serverType)
+                if (item.Id == serverType)
                 {
-                    _cmbServerType.SelectedIndex = i;
+                    _cmbServerType.SelectedItem = item;
                     return;
                 }
             }
 
-            _cmbServerType.SelectedIndex = 0;
+            if (_cmbServerType.Items.Count > 0)
+            {
+                _cmbServerType.SelectedIndex = 0;
+            }
         }
 
         private void SelectServerRow(int id)
@@ -663,6 +793,12 @@ namespace OPC_CFGCS.UI.Forms
         {
             SelectGridRow(_aliasesGrid, id);
             LoadSelectedAlias();
+        }
+
+        private void SelectTypeRow(byte id)
+        {
+            SelectGridRow(_typesGrid, id);
+            LoadSelectedType();
         }
 
         private void SelectParameterRow(int id)
@@ -683,6 +819,14 @@ namespace OPC_CFGCS.UI.Forms
             {
                 var alias = row.DataBoundItem as Alias;
                 if (alias != null && alias.Id == id)
+                {
+                    row.Selected = true;
+                    grid.CurrentCell = row.Cells[0];
+                    return;
+                }
+
+                var opcType = row.DataBoundItem as OpcType;
+                if (opcType != null && opcType.Id == id)
                 {
                     row.Selected = true;
                     grid.CurrentCell = row.Cells[0];
@@ -722,18 +866,6 @@ namespace OPC_CFGCS.UI.Forms
         private void ShowError(Exception ex)
         {
             MessageBox.Show(ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-
-        private sealed class ServerTypeItem
-        {
-            public ServerTypeItem(byte value, string text)
-            {
-                Value = value;
-                Text = text;
-            }
-
-            public byte Value { get; private set; }
-            public string Text { get; private set; }
         }
     }
 }
