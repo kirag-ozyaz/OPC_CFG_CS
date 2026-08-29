@@ -37,6 +37,13 @@ namespace OPC_CFGCS.UI.Forms
         private void InitializeMenu()
         {
             var menuStrip = new MenuStrip();
+
+            var dataMenu = new ToolStripMenuItem("Данные");
+            var tagsMenuItem = new ToolStripMenuItem("Заполнение тегов...");
+            tagsMenuItem.Click += OnTagsEditClick;
+            dataMenu.DropDownItems.Add(tagsMenuItem);
+            menuStrip.Items.Add(dataMenu);
+
             var settingsMenu = new ToolStripMenuItem("Настройки");
             var referenceMenuItem = new ToolStripMenuItem("Справочники...");
             referenceMenuItem.Click += OnReferenceDataClick;
@@ -44,6 +51,27 @@ namespace OPC_CFGCS.UI.Forms
             menuStrip.Items.Add(settingsMenu);
             MainMenuStrip = menuStrip;
             Controls.Add(menuStrip);
+        }
+
+        private void OnTagsEditClick(object sender, EventArgs e)
+        {
+            if (!mainWorkPanel.Enabled)
+            {
+                MessageBox.Show(
+                    "Сначала подключитесь к базе данных.",
+                    "OPC_CFGCS",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            using (var form = new TagsEditForm())
+            {
+                form.ShowDialog(this);
+            }
+
+            tagsPanel.ReloadData();
+            RefreshSchemaBindingHighlights();
         }
 
         private void OnReferenceDataClick(object sender, EventArgs e)

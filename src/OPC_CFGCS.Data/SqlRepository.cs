@@ -606,24 +606,44 @@ WHERE Id = @id";
             using (var connection = DatabaseConnection.CreateConnection())
             using (var command = new SqlCommand(sql, connection))
             {
+                AddTagParameters(command, tag);
                 command.Parameters.Add("@id", SqlDbType.Int).Value = tag.Id;
-                command.Parameters.Add("@serverId", SqlDbType.Int).Value = tag.ServerId;
-                command.Parameters.Add("@tag", SqlDbType.NVarChar, 255).Value = (object)tag.TagName ?? DBNull.Value;
-                command.Parameters.Add("@objectId", SqlDbType.Int).Value = (object)tag.ObjectId ?? DBNull.Value;
-                command.Parameters.Add("@parameterId", SqlDbType.Int).Value = (object)tag.ParameterId ?? DBNull.Value;
-                command.Parameters.Add("@multiplier", SqlDbType.Float).Value = (object)tag.Multiplier ?? DBNull.Value;
-                command.Parameters.Add("@offset", SqlDbType.Float).Value = (object)tag.Offset ?? DBNull.Value;
-                command.Parameters.Add("@bitMask", SqlDbType.Int).Value = (object)tag.BitMask ?? DBNull.Value;
-                command.Parameters.Add("@deadBand", SqlDbType.Float).Value = (object)tag.DeadBand ?? DBNull.Value;
-                command.Parameters.Add("@itemName", SqlDbType.NVarChar, 255).Value = (object)tag.ItemName ?? DBNull.Value;
-                command.Parameters.Add("@source", SqlDbType.NVarChar, 255).Value = (object)tag.Source ?? DBNull.Value;
-                command.Parameters.Add("@area", SqlDbType.NVarChar, 255).Value = (object)tag.Area ?? DBNull.Value;
-                command.Parameters.Add("@zeroNormalState", SqlDbType.Bit).Value = (object)tag.ZeroNormalState ?? DBNull.Value;
-                command.Parameters.Add("@normalState", SqlDbType.TinyInt).Value = (object)tag.NormalState ?? DBNull.Value;
-
                 connection.Open();
                 command.ExecuteNonQuery();
             }
+        }
+
+        public int InsertTag(Tag tag)
+        {
+            const string sql = @"
+INSERT INTO dbo.Tags (ServerId, Tag, ObjectId, ParameterId, Multiplier, Offset, BitMask, DeadBand, ItemName, Source, Area, ZeroNormalState, NormalState)
+VALUES (@serverId, @tag, @objectId, @parameterId, @multiplier, @offset, @bitMask, @deadBand, @itemName, @source, @area, @zeroNormalState, @normalState);
+SELECT CAST(SCOPE_IDENTITY() AS int);";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                AddTagParameters(command, tag);
+                connection.Open();
+                return (int)command.ExecuteScalar();
+            }
+        }
+
+        private static void AddTagParameters(SqlCommand command, Tag tag)
+        {
+            command.Parameters.Add("@serverId", SqlDbType.Int).Value = tag.ServerId;
+            command.Parameters.Add("@tag", SqlDbType.NVarChar, 255).Value = (object)tag.TagName ?? DBNull.Value;
+            command.Parameters.Add("@objectId", SqlDbType.Int).Value = (object)tag.ObjectId ?? DBNull.Value;
+            command.Parameters.Add("@parameterId", SqlDbType.Int).Value = (object)tag.ParameterId ?? DBNull.Value;
+            command.Parameters.Add("@multiplier", SqlDbType.Float).Value = (object)tag.Multiplier ?? DBNull.Value;
+            command.Parameters.Add("@offset", SqlDbType.Float).Value = (object)tag.Offset ?? DBNull.Value;
+            command.Parameters.Add("@bitMask", SqlDbType.Int).Value = (object)tag.BitMask ?? DBNull.Value;
+            command.Parameters.Add("@deadBand", SqlDbType.Float).Value = (object)tag.DeadBand ?? DBNull.Value;
+            command.Parameters.Add("@itemName", SqlDbType.NVarChar, 255).Value = (object)tag.ItemName ?? DBNull.Value;
+            command.Parameters.Add("@source", SqlDbType.NVarChar, 255).Value = (object)tag.Source ?? DBNull.Value;
+            command.Parameters.Add("@area", SqlDbType.NVarChar, 255).Value = (object)tag.Area ?? DBNull.Value;
+            command.Parameters.Add("@zeroNormalState", SqlDbType.Bit).Value = (object)tag.ZeroNormalState ?? DBNull.Value;
+            command.Parameters.Add("@normalState", SqlDbType.TinyInt).Value = (object)tag.NormalState ?? DBNull.Value;
         }
 
         public bool UpdateTagObjectId(int tagId, int? objectId)

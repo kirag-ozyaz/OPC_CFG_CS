@@ -50,6 +50,9 @@
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="GridColors.cs" />
+    <Compile Include="Forms\TagsEditForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\ReferenceDataForm.cs">
       <SubType>Form</SubType>
     </Compile>

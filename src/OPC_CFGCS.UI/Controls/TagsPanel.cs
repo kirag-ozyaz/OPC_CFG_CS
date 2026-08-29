@@ -35,17 +35,22 @@ namespace OPC_CFGCS.UI.Controls
         private bool _groupChanged;
         private SchemaObjectType _schemaObjectType = SchemaObjectType.PowerStation;
 
-        public event EventHandler TagChanged;
-        public event EventHandler CloseRequested;
+        private readonly bool _showEditorPanel;
 
-        public TagsPanel()
+        public event EventHandler TagChanged;
+
+        public TagsPanel(bool showEditorPanel = true)
         {
+            _showEditorPanel = showEditorPanel;
             Dock = DockStyle.Fill;
             BuildLayout();
             _tags = new BindingList<Tag>();
             _tag2Groups = new BindingList<Tag2Group>();
             _grid.DataSource = _tags;
-            SetEditMode(false);
+            if (_showEditorPanel)
+            {
+                SetEditMode(false);
+            }
         }
 
         public void ReloadData()
@@ -153,40 +158,49 @@ namespace OPC_CFGCS.UI.Controls
 
             split.Panel1.Controls.Add(_grid);
 
-            _editorPanel.Dock = DockStyle.Fill;
-            _editorPanel.Padding = new Padding(8);
-            var table = new TableLayoutPanel
+            if (_showEditorPanel)
             {
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                ColumnCount = 4,
-                RowCount = 6
-            };
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+                _editorPanel.Dock = DockStyle.Fill;
+                _editorPanel.Padding = new Padding(8);
+                var table = new TableLayoutPanel
+                {
+                    Dock = DockStyle.Top,
+                    AutoSize = true,
+                    ColumnCount = 4,
+                    RowCount = 6
+                };
+                table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+                table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+                table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+                table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
 
-            AddEditorRow(table, 0, "Сервер", _cmbServer, "Группа", _cmbGroup);
-            AddEditorRow(table, 1, "Параметр", _cmbParameter, "Area", _txtArea);
-            AddEditorRow(table, 2, "Source", _txtSource, "ItemName", _txtItemName);
-            AddEditorRow(table, 3, "Multiplier", _txtMultiplier, "Offset", _txtOffset);
-            AddEditorRow(table, 4, "BitMask", _txtBitMask, "DeadBand", _txtDeadBand);
+                AddEditorRow(table, 0, "Сервер", _cmbServer, "Группа", _cmbGroup);
+                AddEditorRow(table, 1, "Параметр", _cmbParameter, "Area", _txtArea);
+                AddEditorRow(table, 2, "Source", _txtSource, "ItemName", _txtItemName);
+                AddEditorRow(table, 3, "Multiplier", _txtMultiplier, "Offset", _txtOffset);
+                AddEditorRow(table, 4, "BitMask", _txtBitMask, "DeadBand", _txtDeadBand);
 
-            var buttonsPanel = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true };
-            buttonsPanel.Controls.Add(_chkEdit);
-            buttonsPanel.Controls.Add(_chkNormalState);
-            buttonsPanel.Controls.Add(_btnSave);
+                var buttonsPanel = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true };
+                buttonsPanel.Controls.Add(_chkEdit);
+                buttonsPanel.Controls.Add(_chkNormalState);
+                buttonsPanel.Controls.Add(_btnSave);
 
-            _chkEdit.CheckedChanged += (s, e) => SetEditMode(_chkEdit.Checked);
-            _btnSave.Click += OnSaveClick;
-            _cmbServer.SelectedIndexChanged += OnServerChanged;
-            _cmbGroup.SelectedIndexChanged += (s, e) => _groupChanged = !_isInserting;
-            _cmbGroup.DropDown += OnGroupDropDown;
+                _chkEdit.CheckedChanged += (s, e) => SetEditMode(_chkEdit.Checked);
+                _btnSave.Click += OnSaveClick;
+                _cmbServer.SelectedIndexChanged += OnServerChanged;
+                _cmbGroup.SelectedIndexChanged += (s, e) => _groupChanged = !_isInserting;
+                _cmbGroup.DropDown += OnGroupDropDown;
 
-            _editorPanel.Controls.Add(buttonsPanel);
-            _editorPanel.Controls.Add(table);
-            split.Panel2.Controls.Add(_editorPanel);
+                _editorPanel.Controls.Add(buttonsPanel);
+                _editorPanel.Controls.Add(table);
+                split.Panel2.Controls.Add(_editorPanel);
+            }
+            else
+            {
+                split.Panel2Collapsed = true;
+                _grid.AllowUserToAddRows = false;
+            }
+
             Controls.Add(split);
         }
 
@@ -251,6 +265,16 @@ namespace OPC_CFGCS.UI.Controls
                 return;
             }
 
+            if (!_showEditorPanel)
+            {
+                if (!string.IsNullOrWhiteSpace(tag.Area))
+                {
+                    AppState.CurrentArea = AreaHelper.GetParentObj(tag.Area);
+                }
+
+                return;
+            }
+
             if (_groupChanged && tag.Id > 0)
             {
                 var groupId = GetSelectedGroupId();
@@ -312,24 +336,52 @@ namespace OPC_CFGCS.UI.Controls
             tag.DeadBand = ParseDouble(_txtDeadBand.Text);
             tag.ZeroNormalState = _chkNormalState.Checked;
 
-            if (tag.Id > 0)
+            try
             {
-                _repository.UpdateTag(tag);
-                if (_groupChanged)
+                if (tag.Id > 0)
                 {
+                    _repository.UpdateTag(tag);
+                    if (_groupChanged)
+                    {
+                        var groupId = GetSelectedGroupId();
+                        if (groupId.HasValue)
+                        {
+                            _repository.UpdateTag2Group(groupId.Value, tag.Id);
+                        }
+
+                        _groupChanged = false;
+                    }
+                }
+                else
+                {
+                    if (_cmbServer.SelectedValue == null)
+                    {
+                        MessageBox.Show(
+                            "Выберите сервер.",
+                            "OPC_CFGCS",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    tag.Id = _repository.InsertTag(tag);
                     var groupId = GetSelectedGroupId();
                     if (groupId.HasValue)
                     {
-                        _repository.UpdateTag2Group(groupId.Value, tag.Id);
+                        _repository.InsertTag2Group(groupId.Value, tag.Id);
                     }
 
                     _groupChanged = false;
                 }
-            }
 
-            RefreshTagsPreserveSelection(tag.Id);
-            _isInserting = false;
-            SetEditMode(_chkEdit.Checked);
+                RefreshTagsPreserveSelection(tag.Id);
+                _isInserting = false;
+                SetEditMode(_chkEdit.Checked);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "OPC_CFGCS", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void OnServerChanged(object sender, EventArgs e)

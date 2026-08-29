@@ -63,7 +63,7 @@ namespace OPC_CFGCS.UI.Forms
             this.bindPanel = new OPC_CFGCS.UI.Controls.BindPanel();
             this.bindButtonPanel = new System.Windows.Forms.Panel();
             this.btnBind = new System.Windows.Forms.Button();
-            this.tagsPanel = new OPC_CFGCS.UI.Controls.TagsPanel();
+            this.tagsPanel = new OPC_CFGCS.UI.Controls.TagsPanel(false);
             this.bindHeaderLabel = new System.Windows.Forms.Label();
             this.connectionPanel.SuspendLayout();
             this.connectionLayout.SuspendLayout();
