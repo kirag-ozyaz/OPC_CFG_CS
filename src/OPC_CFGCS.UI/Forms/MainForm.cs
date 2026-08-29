@@ -29,6 +29,39 @@ namespace OPC_CFGCS.UI.Forms
             CenterBindButton();
             txtConnectionString.Text = DatabaseConnection.ConnectionString;
             mainWorkPanel.Enabled = false;
+            InitializeMenu();
+        }
+
+        private void InitializeMenu()
+        {
+            var menuStrip = new MenuStrip();
+            var settingsMenu = new ToolStripMenuItem("Настройки");
+            var referenceMenuItem = new ToolStripMenuItem("Справочники...");
+            referenceMenuItem.Click += OnReferenceDataClick;
+            settingsMenu.DropDownItems.Add(referenceMenuItem);
+            menuStrip.Items.Add(settingsMenu);
+            MainMenuStrip = menuStrip;
+            Controls.Add(menuStrip);
+        }
+
+        private void OnReferenceDataClick(object sender, EventArgs e)
+        {
+            if (!mainWorkPanel.Enabled)
+            {
+                MessageBox.Show(
+                    "Сначала подключитесь к базе данных.",
+                    "OPC_CFGCS",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            using (var form = new ReferenceDataForm())
+            {
+                form.ShowDialog(this);
+            }
+
+            tagsPanel.ReloadData();
         }
 
         private void CenterBindButton()

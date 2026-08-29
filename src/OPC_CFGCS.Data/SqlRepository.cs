@@ -50,8 +50,16 @@ ORDER BY t.Area, t.Source, t.ServerId";
         public IList<OpcGroup> GetOpcGroups(int? serverId = null)
         {
             var sql = serverId.HasValue
-                ? "SELECT Id, ServerId, Name FROM dbo.OpcGroups WHERE Deleted = 0 AND ServerId = @serverId ORDER BY Name"
-                : "SELECT Id, ServerId, Name FROM dbo.OpcGroups WHERE Deleted = 0 ORDER BY Name";
+                ? @"SELECT g.Id, g.ServerId, g.Name, s.ServerName
+FROM dbo.OpcGroups g
+INNER JOIN dbo.Servers s ON s.Id = g.ServerId
+WHERE g.Deleted = 0 AND g.ServerId = @serverId
+ORDER BY s.ServerName, g.Name"
+                : @"SELECT g.Id, g.ServerId, g.Name, s.ServerName
+FROM dbo.OpcGroups g
+INNER JOIN dbo.Servers s ON s.Id = g.ServerId
+WHERE g.Deleted = 0
+ORDER BY s.ServerName, g.Name";
 
             var result = new List<OpcGroup>();
 
@@ -72,7 +80,8 @@ ORDER BY t.Area, t.Source, t.ServerId";
                         {
                             Id = reader.GetInt32(0),
                             ServerId = reader.GetInt32(1),
-                            Name = reader.IsDBNull(2) ? null : reader.GetString(2)
+                            Name = reader.IsDBNull(2) ? null : reader.GetString(2),
+                            ServerName = reader.IsDBNull(3) ? null : reader.GetString(3)
                         });
                     }
                 }
@@ -83,7 +92,7 @@ ORDER BY t.Area, t.Source, t.ServerId";
 
         public IList<Server> GetServers()
         {
-            const string sql = "SELECT Id, HostName, ServerName FROM dbo.Servers ORDER BY ServerName";
+            const string sql = "SELECT Id, AliasId, HostName, ServerName, ServerType FROM dbo.Servers ORDER BY ServerName";
             var result = new List<Server>();
 
             using (var connection = DatabaseConnection.CreateConnection())
@@ -97,14 +106,165 @@ ORDER BY t.Area, t.Source, t.ServerId";
                         result.Add(new Server
                         {
                             Id = reader.GetInt32(0),
-                            HostName = reader.IsDBNull(1) ? null : reader.GetString(1),
-                            ServerName = reader.IsDBNull(2) ? null : reader.GetString(2)
+                            AliasId = reader.GetInt32(1),
+                            HostName = reader.IsDBNull(2) ? null : reader.GetString(2),
+                            ServerName = reader.IsDBNull(3) ? null : reader.GetString(3),
+                            ServerType = reader.GetByte(4)
                         });
                     }
                 }
             }
 
             return result;
+        }
+
+        public int InsertServer(Server server)
+        {
+            const string sql = @"
+INSERT INTO dbo.Servers (AliasId, HostName, ServerName, ServerType)
+VALUES (@aliasId, @hostName, @serverName, @serverType);
+SELECT CAST(SCOPE_IDENTITY() AS int);";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@aliasId", SqlDbType.Int).Value = server.AliasId;
+                command.Parameters.Add("@hostName", SqlDbType.NVarChar, 50).Value = (object)server.HostName ?? DBNull.Value;
+                command.Parameters.Add("@serverName", SqlDbType.NVarChar, 50).Value = server.ServerName;
+                command.Parameters.Add("@serverType", SqlDbType.TinyInt).Value = server.ServerType;
+                connection.Open();
+                return (int)command.ExecuteScalar();
+            }
+        }
+
+        public void UpdateServer(Server server)
+        {
+            const string sql = @"
+UPDATE dbo.Servers
+SET AliasId = @aliasId,
+    HostName = @hostName,
+    ServerName = @serverName,
+    ServerType = @serverType
+WHERE Id = @id";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@id", SqlDbType.Int).Value = server.Id;
+                command.Parameters.Add("@aliasId", SqlDbType.Int).Value = server.AliasId;
+                command.Parameters.Add("@hostName", SqlDbType.NVarChar, 50).Value = (object)server.HostName ?? DBNull.Value;
+                command.Parameters.Add("@serverName", SqlDbType.NVarChar, 50).Value = server.ServerName;
+                command.Parameters.Add("@serverType", SqlDbType.TinyInt).Value = server.ServerType;
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public void DeleteServer(int id)
+        {
+            const string sql = "DELETE FROM dbo.Servers WHERE Id = @id";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public int InsertParameter(Parameter parameter)
+        {
+            const string sql = @"
+INSERT INTO dbo.Parameters (Description, ObjectDescription)
+VALUES (@description, @objectDescription);
+SELECT CAST(SCOPE_IDENTITY() AS int);";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@description", SqlDbType.NVarChar, 255).Value = (object)parameter.Description ?? DBNull.Value;
+                command.Parameters.Add("@objectDescription", SqlDbType.NVarChar, 255).Value = (object)parameter.ObjectDescription ?? DBNull.Value;
+                connection.Open();
+                return (int)command.ExecuteScalar();
+            }
+        }
+
+        public void UpdateParameter(Parameter parameter)
+        {
+            const string sql = @"
+UPDATE dbo.Parameters
+SET Description = @description,
+    ObjectDescription = @objectDescription
+WHERE Id = @id";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@id", SqlDbType.Int).Value = parameter.Id;
+                command.Parameters.Add("@description", SqlDbType.NVarChar, 255).Value = (object)parameter.Description ?? DBNull.Value;
+                command.Parameters.Add("@objectDescription", SqlDbType.NVarChar, 255).Value = (object)parameter.ObjectDescription ?? DBNull.Value;
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public void DeleteParameter(int id)
+        {
+            const string sql = "DELETE FROM dbo.Parameters WHERE Id = @id";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public int InsertOpcGroup(OpcGroup group)
+        {
+            const string sql = @"
+INSERT INTO dbo.OpcGroups (ServerId, Name, Active, DeadBand, RefreshRate, AsIs, ItemNamePattern, AllItems, Deleted)
+VALUES (@serverId, @name, 1, 0, 1000, 0, 0, 1, 0);
+SELECT CAST(SCOPE_IDENTITY() AS int);";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@serverId", SqlDbType.Int).Value = group.ServerId;
+                command.Parameters.Add("@name", SqlDbType.VarChar, 50).Value = group.Name;
+                connection.Open();
+                return (int)command.ExecuteScalar();
+            }
+        }
+
+        public void UpdateOpcGroup(OpcGroup group)
+        {
+            const string sql = "UPDATE dbo.OpcGroups SET ServerId = @serverId, Name = @name WHERE Id = @id";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@id", SqlDbType.Int).Value = group.Id;
+                command.Parameters.Add("@serverId", SqlDbType.Int).Value = group.ServerId;
+                command.Parameters.Add("@name", SqlDbType.VarChar, 50).Value = group.Name;
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public void DeleteOpcGroup(int id)
+        {
+            const string sql = "UPDATE dbo.OpcGroups SET Deleted = 1 WHERE Id = @id";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
         }
 
         public IList<Parameter> GetParameters()
