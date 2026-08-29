@@ -16,8 +16,16 @@ namespace OPC_CFGCS.UI.Forms
         {
             InitializeComponent();
             LoadApplicationIcons();
+            bindButtonPanel.Resize += (s, e) => CenterBindButton();
+            CenterBindButton();
             txtConnectionString.Text = DatabaseConnection.ConnectionString;
             rootSplitContainer.Enabled = false;
+        }
+
+        private void CenterBindButton()
+        {
+            btnBind.Left = Math.Max(0, (bindButtonPanel.ClientSize.Width - btnBind.Width) / 2);
+            btnBind.Top = Math.Max(0, (bindButtonPanel.ClientSize.Height - btnBind.Height) / 2);
         }
 
         private void LoadApplicationIcons()

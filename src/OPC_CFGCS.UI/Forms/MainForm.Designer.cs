@@ -15,10 +15,11 @@ namespace OPC_CFGCS.UI.Forms
         private Button btnConnect;
         private Label lblConnectionStatus;
         private SplitContainer rootSplitContainer;
-        private SplitContainer topSplitContainer;
+        private Panel mainWorkPanel;
+        private TableLayoutPanel gridsLayout;
         private Panel schemaPanel;
         private Label bindHeaderLabel;
-        private Panel bindToolbarPanel;
+        private Panel bindButtonPanel;
         private TabControl schemaTabs;
         private TabPage tabPs;
         private TabPage tabBus;
@@ -50,7 +51,8 @@ namespace OPC_CFGCS.UI.Forms
             this.btnConnect = new Button();
             this.lblConnectionStatus = new Label();
             this.rootSplitContainer = new SplitContainer();
-            this.topSplitContainer = new SplitContainer();
+            this.mainWorkPanel = new Panel();
+            this.gridsLayout = new TableLayoutPanel();
             this.schemaPanel = new Panel();
             this.schemaTabs = new TabControl();
             this.tabPs = new TabPage();
@@ -59,7 +61,7 @@ namespace OPC_CFGCS.UI.Forms
             this.psPanel = new SchemaObjectPanel(SchemaObjectType.PowerStation);
             this.busPanel = new SchemaObjectPanel(SchemaObjectType.CellBus);
             this.switchPanel = new SchemaObjectPanel(SchemaObjectType.CellSwitch);
-            this.bindToolbarPanel = new Panel();
+            this.bindButtonPanel = new Panel();
             this.btnBind = new Button();
             this.bindHeaderLabel = new Label();
             this.tagsPanel = new TagsPanel();
@@ -68,16 +70,14 @@ namespace OPC_CFGCS.UI.Forms
             this.rootSplitContainer.Panel1.SuspendLayout();
             this.rootSplitContainer.Panel2.SuspendLayout();
             this.rootSplitContainer.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.topSplitContainer)).BeginInit();
-            this.topSplitContainer.Panel1.SuspendLayout();
-            this.topSplitContainer.Panel2.SuspendLayout();
-            this.topSplitContainer.SuspendLayout();
+            this.mainWorkPanel.SuspendLayout();
+            this.gridsLayout.SuspendLayout();
             this.schemaPanel.SuspendLayout();
             this.schemaTabs.SuspendLayout();
             this.tabPs.SuspendLayout();
             this.tabBus.SuspendLayout();
             this.tabSwitch.SuspendLayout();
-            this.bindToolbarPanel.SuspendLayout();
+            this.bindButtonPanel.SuspendLayout();
             this.connectionPanel.SuspendLayout();
             this.connectionLayout.SuspendLayout();
             this.SuspendLayout();
@@ -165,25 +165,41 @@ namespace OPC_CFGCS.UI.Forms
             this.rootSplitContainer.SplitterDistance = 420;
             this.rootSplitContainer.TabIndex = 0;
             //
-            // topSplitContainer
+            // mainWorkPanel
             //
-            this.topSplitContainer.Dock = DockStyle.Fill;
-            this.topSplitContainer.Location = new Point(0, 0);
-            this.topSplitContainer.Name = "topSplitContainer";
-            this.topSplitContainer.Size = new Size(1280, 420);
-            this.topSplitContainer.SplitterDistance = 760;
-            this.topSplitContainer.TabIndex = 0;
+            this.mainWorkPanel.Controls.Add(this.gridsLayout);
+            this.mainWorkPanel.Controls.Add(this.bindHeaderLabel);
+            this.mainWorkPanel.Dock = DockStyle.Fill;
+            this.mainWorkPanel.Location = new Point(0, 0);
+            this.mainWorkPanel.Name = "mainWorkPanel";
+            this.mainWorkPanel.Padding = new Padding(8);
+            this.mainWorkPanel.Size = new Size(1280, 420);
+            this.mainWorkPanel.TabIndex = 0;
+            //
+            // gridsLayout
+            //
+            this.gridsLayout.ColumnCount = 3;
+            this.gridsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            this.gridsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 56F));
+            this.gridsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            this.gridsLayout.Controls.Add(this.schemaPanel, 0, 0);
+            this.gridsLayout.Controls.Add(this.bindButtonPanel, 1, 0);
+            this.gridsLayout.Controls.Add(this.tagsPanel, 2, 0);
+            this.gridsLayout.Dock = DockStyle.Fill;
+            this.gridsLayout.Location = new Point(8, 32);
+            this.gridsLayout.Name = "gridsLayout";
+            this.gridsLayout.RowCount = 1;
+            this.gridsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            this.gridsLayout.Size = new Size(1264, 380);
+            this.gridsLayout.TabIndex = 1;
             //
             // schemaPanel
             //
             this.schemaPanel.Controls.Add(this.schemaTabs);
-            this.schemaPanel.Controls.Add(this.bindToolbarPanel);
-            this.schemaPanel.Controls.Add(this.bindHeaderLabel);
             this.schemaPanel.Dock = DockStyle.Fill;
-            this.schemaPanel.Location = new Point(0, 0);
+            this.schemaPanel.Location = new Point(3, 3);
             this.schemaPanel.Name = "schemaPanel";
-            this.schemaPanel.Padding = new Padding(8);
-            this.schemaPanel.Size = new Size(760, 420);
+            this.schemaPanel.Size = new Size(598, 374);
             this.schemaPanel.TabIndex = 0;
             //
             // schemaTabs
@@ -192,11 +208,11 @@ namespace OPC_CFGCS.UI.Forms
             this.schemaTabs.Controls.Add(this.tabBus);
             this.schemaTabs.Controls.Add(this.tabSwitch);
             this.schemaTabs.Dock = DockStyle.Fill;
-            this.schemaTabs.Location = new Point(8, 68);
+            this.schemaTabs.Location = new Point(0, 0);
             this.schemaTabs.Name = "schemaTabs";
             this.schemaTabs.SelectedIndex = 0;
-            this.schemaTabs.Size = new Size(744, 344);
-            this.schemaTabs.TabIndex = 2;
+            this.schemaTabs.Size = new Size(598, 374);
+            this.schemaTabs.TabIndex = 0;
             this.schemaTabs.SelectedIndexChanged += new System.EventHandler(this.OnSchemaTabChanged);
             //
             // tabPs
@@ -259,20 +275,21 @@ namespace OPC_CFGCS.UI.Forms
             this.switchPanel.TabIndex = 0;
             this.switchPanel.CurrentObjectChanged += new System.EventHandler(this.OnSchemaObjectChanged);
             //
-            // bindToolbarPanel
+            // bindButtonPanel
             //
-            this.bindToolbarPanel.Controls.Add(this.btnBind);
-            this.bindToolbarPanel.Dock = DockStyle.Top;
-            this.bindToolbarPanel.Location = new Point(8, 32);
-            this.bindToolbarPanel.Name = "bindToolbarPanel";
-            this.bindToolbarPanel.Size = new Size(744, 36);
-            this.bindToolbarPanel.TabIndex = 1;
+            this.bindButtonPanel.Controls.Add(this.btnBind);
+            this.bindButtonPanel.Dock = DockStyle.Fill;
+            this.bindButtonPanel.Location = new Point(607, 3);
+            this.bindButtonPanel.Name = "bindButtonPanel";
+            this.bindButtonPanel.Size = new Size(50, 374);
+            this.bindButtonPanel.TabIndex = 1;
             //
             // btnBind
             //
-            this.btnBind.Location = new Point(8, 4);
+            this.btnBind.Anchor = AnchorStyles.None;
+            this.btnBind.Location = new Point(7, 173);
             this.btnBind.Name = "btnBind";
-            this.btnBind.Size = new Size(60, 28);
+            this.btnBind.Size = new Size(36, 28);
             this.btnBind.TabIndex = 0;
             this.btnBind.Text = "<=>";
             this.btnBind.UseVisualStyleBackColor = true;
@@ -284,17 +301,17 @@ namespace OPC_CFGCS.UI.Forms
             this.bindHeaderLabel.Font = new Font(this.Font, FontStyle.Bold);
             this.bindHeaderLabel.Location = new Point(8, 8);
             this.bindHeaderLabel.Name = "bindHeaderLabel";
-            this.bindHeaderLabel.Size = new Size(744, 24);
+            this.bindHeaderLabel.Size = new Size(1264, 24);
             this.bindHeaderLabel.TabIndex = 0;
             this.bindHeaderLabel.Text = "Связь OPC тэгов с объектами схемы";
             //
             // tagsPanel
             //
             this.tagsPanel.Dock = DockStyle.Fill;
-            this.tagsPanel.Location = new Point(0, 0);
+            this.tagsPanel.Location = new Point(663, 3);
             this.tagsPanel.Name = "tagsPanel";
-            this.tagsPanel.Size = new Size(516, 420);
-            this.tagsPanel.TabIndex = 0;
+            this.tagsPanel.Size = new Size(598, 374);
+            this.tagsPanel.TabIndex = 2;
             this.tagsPanel.TagChanged += new System.EventHandler(this.OnTagChanged);
             //
             // bindPanel
@@ -305,17 +322,9 @@ namespace OPC_CFGCS.UI.Forms
             this.bindPanel.Size = new Size(1280, 376);
             this.bindPanel.TabIndex = 0;
             //
-            // topSplitContainer.Panel1
-            //
-            this.topSplitContainer.Panel1.Controls.Add(this.schemaPanel);
-            //
-            // topSplitContainer.Panel2
-            //
-            this.topSplitContainer.Panel2.Controls.Add(this.tagsPanel);
-            //
             // rootSplitContainer.Panel1
             //
-            this.rootSplitContainer.Panel1.Controls.Add(this.topSplitContainer);
+            this.rootSplitContainer.Panel1.Controls.Add(this.mainWorkPanel);
             //
             // rootSplitContainer.Panel2
             //
@@ -336,16 +345,14 @@ namespace OPC_CFGCS.UI.Forms
             this.rootSplitContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.rootSplitContainer)).EndInit();
             this.rootSplitContainer.ResumeLayout(false);
-            this.topSplitContainer.Panel1.ResumeLayout(false);
-            this.topSplitContainer.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.topSplitContainer)).EndInit();
-            this.topSplitContainer.ResumeLayout(false);
+            this.mainWorkPanel.ResumeLayout(false);
+            this.gridsLayout.ResumeLayout(false);
             this.schemaPanel.ResumeLayout(false);
             this.schemaTabs.ResumeLayout(false);
             this.tabPs.ResumeLayout(false);
             this.tabBus.ResumeLayout(false);
             this.tabSwitch.ResumeLayout(false);
-            this.bindToolbarPanel.ResumeLayout(false);
+            this.bindButtonPanel.ResumeLayout(false);
             this.connectionPanel.ResumeLayout(false);
             this.connectionLayout.ResumeLayout(false);
             this.connectionLayout.PerformLayout();
