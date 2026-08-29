@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
@@ -217,12 +218,14 @@ namespace OPC_CFGCS.UI.Forms
 
         private void ConfigureAliasGrid()
         {
+            _aliasesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Id", HeaderText = "Id", Width = 50 });
             _aliasesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Name", HeaderText = "Alias", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
             _aliasesGrid.SelectionChanged += (s, e) => LoadSelectedAlias();
         }
 
         private void ConfigureServerGrid()
         {
+            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "AliasId", HeaderText = "AliasId", Width = 60 });
             _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "AliasName", HeaderText = "Alias", Width = 140 });
             _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "HostName", HeaderText = "HostName", Width = 160 });
             _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerName", HeaderText = "ServerName", Width = 160 });
@@ -254,8 +257,32 @@ namespace OPC_CFGCS.UI.Forms
             _serversGrid.DataSource = _servers;
             _parametersGrid.DataSource = _parameters;
             _groupsGrid.DataSource = _groups;
-            _cmbServerAlias.DataSource = new BindingList<Alias>(_repository.GetAliases());
+            _cmbServerAlias.DataSource = BuildServerAliasOptions();
             _cmbGroupServer.DataSource = new BindingList<Server>(_repository.GetServers());
+        }
+
+        private IList<Alias> BuildServerAliasOptions()
+        {
+            var options = new List<Alias>
+            {
+                new Alias { Id = 0, Name = "(не задан)" }
+            };
+            options.AddRange(_repository.GetAliases());
+            return options;
+        }
+
+        private void SelectServerAlias(int aliasId)
+        {
+            foreach (Alias item in _cmbServerAlias.Items)
+            {
+                if (item.Id == aliasId)
+                {
+                    _cmbServerAlias.SelectedItem = item;
+                    return;
+                }
+            }
+
+            _cmbServerAlias.SelectedIndex = 0;
         }
 
         private Alias GetSelectedAlias()
@@ -289,14 +316,14 @@ namespace OPC_CFGCS.UI.Forms
             var server = GetSelectedServer();
             if (server == null)
             {
-                _cmbServerAlias.SelectedIndex = -1;
+                SelectServerAlias(0);
                 _txtServerHost.Clear();
                 _txtServerName.Clear();
                 _cmbServerType.SelectedIndex = 0;
                 return;
             }
 
-            _cmbServerAlias.SelectedValue = server.AliasId;
+            SelectServerAlias(server.AliasId);
             _txtServerHost.Text = server.HostName ?? string.Empty;
             _txtServerName.Text = server.ServerName ?? string.Empty;
             SelectServerType(server.ServerType);
@@ -399,7 +426,7 @@ namespace OPC_CFGCS.UI.Forms
         private void OnAddServer(object sender, EventArgs e)
         {
             _serversGrid.ClearSelection();
-            _cmbServerAlias.SelectedIndex = _cmbServerAlias.Items.Count > 0 ? 0 : -1;
+            SelectServerAlias(0);
             _txtServerHost.Clear();
             _txtServerName.Clear();
             SelectServerType(0);
@@ -408,12 +435,6 @@ namespace OPC_CFGCS.UI.Forms
 
         private void OnSaveServer(object sender, EventArgs e)
         {
-            if (_cmbServerAlias.SelectedValue == null)
-            {
-                ShowValidation("Выберите Alias.");
-                return;
-            }
-
             if (string.IsNullOrWhiteSpace(_txtServerName.Text))
             {
                 ShowValidation("Укажите ServerName.");
@@ -423,7 +444,8 @@ namespace OPC_CFGCS.UI.Forms
             try
             {
                 var server = GetSelectedServer() ?? new Server();
-                server.AliasId = (int)_cmbServerAlias.SelectedValue;
+                var selectedAlias = _cmbServerAlias.SelectedItem as Alias;
+                server.AliasId = selectedAlias == null ? 0 : selectedAlias.Id;
                 server.HostName = _txtServerHost.Text.Trim();
                 server.ServerName = _txtServerName.Text.Trim();
                 server.ServerType = GetSelectedServerType();
