@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Windows.Forms;
 using OPC_CFGCS.Core;
 using OPC_CFGCS.Data;
@@ -8,23 +9,42 @@ namespace OPC_CFGCS.UI.Forms
 {
     public sealed partial class MainForm : Form
     {
-        private readonly SqlRepository _repository = new SqlRepository();
         private SchemaObjectType _currentSchemaType = SchemaObjectType.PowerStation;
 
         public MainForm()
         {
             InitializeComponent();
+            txtConnectionString.Text = DatabaseConnection.ConnectionString;
+            rootSplitContainer.Enabled = false;
+        }
 
-            if (!_repository.TestConnection(out var error))
+        private void OnConnectClick(object sender, EventArgs e)
+        {
+            var connectionString = txtConnectionString.Text.Trim();
+            DatabaseConnection.ConnectionString = connectionString;
+
+            if (!DatabaseConnection.TestConnection(out var error))
             {
+                lblConnectionStatus.Text = "Ошибка подключения";
+                lblConnectionStatus.ForeColor = Color.DarkRed;
+                rootSplitContainer.Enabled = false;
                 MessageBox.Show(
-                    "Не удалось подключиться к SQL Server.\r\n\r\n" + error +
-                    "\r\n\r\nПроверьте App.config (Data Source, Initial Catalog, Integrated Security).",
+                    "Не удалось подключиться к SQL Server.\r\n\r\n" + error,
                     "OPC_CFGCS",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+                return;
             }
 
+            lblConnectionStatus.Text = "Подключено";
+            lblConnectionStatus.ForeColor = Color.DarkGreen;
+            rootSplitContainer.Enabled = true;
+
+            psPanel.Reload();
+            busPanel.Reload();
+            switchPanel.Reload();
+            tagsPanel.ReloadData();
+            bindPanel.ClearBindings();
             UpdateBindings();
         }
 
@@ -74,6 +94,12 @@ namespace OPC_CFGCS.UI.Forms
 
         private void UpdateBindings()
         {
+            if (!rootSplitContainer.Enabled)
+            {
+                bindPanel.ClearBindings();
+                return;
+            }
+
             var current = GetCurrentSchemaPanel().CurrentObject;
             if (current == null)
             {

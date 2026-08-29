@@ -41,9 +41,16 @@ namespace OPC_CFGCS.UI.Controls
         {
             Dock = DockStyle.Fill;
             BuildLayout();
+            _tags = new BindingList<Tag>();
+            _tag2Groups = new BindingList<Tag2Group>();
+            _grid.DataSource = _tags;
+            SetEditMode(false);
+        }
+
+        public void ReloadData()
+        {
             LoadLookups();
             LoadTags();
-            SetEditMode(false);
         }
 
         public Tag CurrentTag

@@ -37,7 +37,8 @@ namespace OPC_CFGCS.UI.Controls
             _grid.KeyDown += OnKeyDown;
 
             Controls.Add(_grid);
-            LoadData();
+            _items = new BindingList<SchemaObject>();
+            _grid.DataSource = _items;
         }
 
         public SchemaObject CurrentObject

@@ -8,6 +8,12 @@ namespace OPC_CFGCS.UI.Forms
     public sealed partial class MainForm
     {
         private System.ComponentModel.IContainer components = null;
+        private Panel connectionPanel;
+        private TableLayoutPanel connectionLayout;
+        private Label lblConnectionString;
+        private TextBox txtConnectionString;
+        private Button btnConnect;
+        private Label lblConnectionStatus;
         private SplitContainer rootSplitContainer;
         private SplitContainer topSplitContainer;
         private Panel schemaPanel;
@@ -37,6 +43,12 @@ namespace OPC_CFGCS.UI.Forms
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            this.connectionPanel = new Panel();
+            this.connectionLayout = new TableLayoutPanel();
+            this.lblConnectionString = new Label();
+            this.txtConnectionString = new TextBox();
+            this.btnConnect = new Button();
+            this.lblConnectionStatus = new Label();
             this.rootSplitContainer = new SplitContainer();
             this.topSplitContainer = new SplitContainer();
             this.schemaPanel = new Panel();
@@ -66,7 +78,82 @@ namespace OPC_CFGCS.UI.Forms
             this.tabBus.SuspendLayout();
             this.tabSwitch.SuspendLayout();
             this.bindToolbarPanel.SuspendLayout();
+            this.connectionPanel.SuspendLayout();
+            this.connectionLayout.SuspendLayout();
             this.SuspendLayout();
+            //
+            // connectionPanel
+            //
+            this.connectionPanel.Controls.Add(this.connectionLayout);
+            this.connectionPanel.Dock = DockStyle.Top;
+            this.connectionPanel.Location = new Point(0, 0);
+            this.connectionPanel.Name = "connectionPanel";
+            this.connectionPanel.Size = new Size(1280, 44);
+            this.connectionPanel.TabIndex = 1;
+            //
+            // connectionLayout
+            //
+            this.connectionLayout.ColumnCount = 4;
+            this.connectionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            this.connectionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            this.connectionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            this.connectionLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            this.connectionLayout.Controls.Add(this.lblConnectionString, 0, 0);
+            this.connectionLayout.Controls.Add(this.txtConnectionString, 1, 0);
+            this.connectionLayout.Controls.Add(this.btnConnect, 2, 0);
+            this.connectionLayout.Controls.Add(this.lblConnectionStatus, 3, 0);
+            this.connectionLayout.Dock = DockStyle.Fill;
+            this.connectionLayout.Location = new Point(0, 0);
+            this.connectionLayout.Name = "connectionLayout";
+            this.connectionLayout.Padding = new Padding(8, 8, 8, 4);
+            this.connectionLayout.RowCount = 1;
+            this.connectionLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            this.connectionLayout.Size = new Size(1280, 44);
+            this.connectionLayout.TabIndex = 0;
+            //
+            // lblConnectionString
+            //
+            this.lblConnectionString.Anchor = AnchorStyles.Left;
+            this.lblConnectionString.AutoSize = true;
+            this.lblConnectionString.Location = new Point(11, 13);
+            this.lblConnectionString.Margin = new Padding(3, 5, 8, 0);
+            this.lblConnectionString.Name = "lblConnectionString";
+            this.lblConnectionString.Size = new Size(118, 13);
+            this.lblConnectionString.TabIndex = 0;
+            this.lblConnectionString.Text = "Строка подключения:";
+            //
+            // txtConnectionString
+            //
+            this.txtConnectionString.Dock = DockStyle.Fill;
+            this.txtConnectionString.Location = new Point(140, 11);
+            this.txtConnectionString.Margin = new Padding(3, 3, 8, 3);
+            this.txtConnectionString.Name = "txtConnectionString";
+            this.txtConnectionString.Size = new Size(944, 20);
+            this.txtConnectionString.TabIndex = 1;
+            //
+            // btnConnect
+            //
+            this.btnConnect.AutoSize = true;
+            this.btnConnect.Location = new Point(1095, 8);
+            this.btnConnect.Margin = new Padding(3, 0, 8, 0);
+            this.btnConnect.Name = "btnConnect";
+            this.btnConnect.Size = new Size(95, 23);
+            this.btnConnect.TabIndex = 2;
+            this.btnConnect.Text = "Подключиться";
+            this.btnConnect.UseVisualStyleBackColor = true;
+            this.btnConnect.Click += new System.EventHandler(this.OnConnectClick);
+            //
+            // lblConnectionStatus
+            //
+            this.lblConnectionStatus.Anchor = AnchorStyles.Left;
+            this.lblConnectionStatus.AutoSize = true;
+            this.lblConnectionStatus.ForeColor = System.Drawing.Color.DarkRed;
+            this.lblConnectionStatus.Location = new Point(1201, 13);
+            this.lblConnectionStatus.Margin = new Padding(3, 5, 3, 0);
+            this.lblConnectionStatus.Name = "lblConnectionStatus";
+            this.lblConnectionStatus.Size = new Size(84, 13);
+            this.lblConnectionStatus.TabIndex = 3;
+            this.lblConnectionStatus.Text = "Не подключено";
             //
             // rootSplitContainer
             //
@@ -240,6 +327,7 @@ namespace OPC_CFGCS.UI.Forms
             this.AutoScaleMode = AutoScaleMode.Font;
             this.ClientSize = new Size(1280, 800);
             this.Controls.Add(this.rootSplitContainer);
+            this.Controls.Add(this.connectionPanel);
             this.Name = "MainForm";
             this.StartPosition = FormStartPosition.CenterScreen;
             this.Text = "Конфигурация OPC";
@@ -258,6 +346,9 @@ namespace OPC_CFGCS.UI.Forms
             this.tabBus.ResumeLayout(false);
             this.tabSwitch.ResumeLayout(false);
             this.bindToolbarPanel.ResumeLayout(false);
+            this.connectionPanel.ResumeLayout(false);
+            this.connectionLayout.ResumeLayout(false);
+            this.connectionLayout.PerformLayout();
             this.ResumeLayout(false);
         }
     }
