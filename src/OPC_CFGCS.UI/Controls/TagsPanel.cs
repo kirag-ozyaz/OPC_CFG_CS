@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using OPC_CFGCS.Core;
 using OPC_CFGCS.Data;
 using OPC_CFGCS.Data.Models;
+using OPC_CFGCS.UI;
 
 namespace OPC_CFGCS.UI.Controls
 {
@@ -136,6 +137,7 @@ namespace OPC_CFGCS.UI.Controls
             _grid.SelectionChanged += OnTagSelectionChanged;
             _grid.UserAddedRow += OnUserAddedRow;
             _grid.KeyDown += OnGridKeyDown;
+            _grid.CellFormatting += OnGridCellFormatting;
 
             split.Panel1.Controls.Add(_grid);
 
@@ -361,6 +363,30 @@ namespace OPC_CFGCS.UI.Controls
                 _grid.CurrentCell = _grid.Rows[_grid.CurrentRow.Index + 1].Cells[0];
                 e.Handled = true;
             }
+        }
+
+        private void OnGridCellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0)
+            {
+                return;
+            }
+
+            var row = _grid.Rows[e.RowIndex];
+            if (row.IsNewRow)
+            {
+                return;
+            }
+
+            var tag = row.DataBoundItem as Tag;
+            if (tag == null || !tag.ObjectId.HasValue)
+            {
+                return;
+            }
+
+            e.CellStyle.BackColor = row.Selected
+                ? GridColors.BoundRowSelectedBackColor
+                : GridColors.BoundRowBackColor;
         }
 
         private void SetEditMode(bool enabled)

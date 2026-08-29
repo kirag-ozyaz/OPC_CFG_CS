@@ -49,6 +49,7 @@
     <Compile Include="Controls\TagsPanel.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="GridColors.cs" />
     <Compile Include="Forms\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

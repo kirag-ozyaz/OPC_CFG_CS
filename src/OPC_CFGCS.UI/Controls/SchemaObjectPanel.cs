@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using OPC_CFGCS.Core;
 using OPC_CFGCS.Data;
 using OPC_CFGCS.Data.Models;
+using OPC_CFGCS.UI;
 
 namespace OPC_CFGCS.UI.Controls
 {
@@ -14,6 +16,7 @@ namespace OPC_CFGCS.UI.Controls
         private readonly SqlRepository _repository = new SqlRepository();
         private readonly DataGridView _grid = new DataGridView();
         private BindingList<SchemaObject> _items;
+        private HashSet<int> _boundObjectIds = new HashSet<int>();
 
         public event EventHandler CurrentObjectChanged;
 
@@ -35,6 +38,7 @@ namespace OPC_CFGCS.UI.Controls
             _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Name", HeaderText = "Имя", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
             _grid.SelectionChanged += OnSelectionChanged;
             _grid.KeyDown += OnKeyDown;
+            _grid.CellFormatting += OnGridCellFormatting;
 
             Controls.Add(_grid);
             _items = new BindingList<SchemaObject>();
@@ -64,8 +68,16 @@ namespace OPC_CFGCS.UI.Controls
             }
         }
 
+        public void RefreshBindingHighlights()
+        {
+            _boundObjectIds = _repository.GetBoundObjectIds();
+            _grid.Invalidate();
+        }
+
         private void LoadData()
         {
+            _boundObjectIds = _repository.GetBoundObjectIds();
+
             switch (_objectType)
             {
                 case SchemaObjectType.PowerStation:
@@ -122,6 +134,30 @@ namespace OPC_CFGCS.UI.Controls
                 _grid.CurrentCell = _grid.Rows[_grid.CurrentRow.Index + 1].Cells[0];
                 e.Handled = true;
             }
+        }
+
+        private void OnGridCellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0)
+            {
+                return;
+            }
+
+            var row = _grid.Rows[e.RowIndex];
+            if (row.IsNewRow)
+            {
+                return;
+            }
+
+            var item = row.DataBoundItem as SchemaObject;
+            if (item == null || !_boundObjectIds.Contains(item.Id))
+            {
+                return;
+            }
+
+            e.CellStyle.BackColor = row.Selected
+                ? GridColors.BoundRowSelectedBackColor
+                : GridColors.BoundRowBackColor;
         }
     }
 }

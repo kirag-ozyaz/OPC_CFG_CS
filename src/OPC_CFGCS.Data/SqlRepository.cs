@@ -205,6 +205,30 @@ ORDER BY ParentTypeName, ParentName, Type, Name";
             return result;
         }
 
+        public HashSet<int> GetBoundObjectIds()
+        {
+            const string sql = "SELECT DISTINCT ObjectId FROM dbo.Tags WHERE ObjectId IS NOT NULL";
+            var result = new HashSet<int>();
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        if (!reader.IsDBNull(0))
+                        {
+                            result.Add(reader.GetInt32(0));
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
         public void InsertTag2Group(int groupId, int tagId)
         {
             const string sql = "INSERT INTO dbo.Tag2Group (GroupId, TagId) VALUES (@groupId, @tagId)";

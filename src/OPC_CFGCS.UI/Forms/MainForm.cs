@@ -125,6 +125,14 @@ namespace OPC_CFGCS.UI.Forms
 
             UpdateBindings();
             UpdateBindButtonCaption();
+            RefreshSchemaBindingHighlights();
+        }
+
+        private void RefreshSchemaBindingHighlights()
+        {
+            psPanel.RefreshBindingHighlights();
+            busPanel.RefreshBindingHighlights();
+            switchPanel.RefreshBindingHighlights();
         }
 
         private void UpdateBindings()
