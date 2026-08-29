@@ -19,7 +19,7 @@ namespace OPC_CFGCS.UI.Forms
             bindButtonPanel.Resize += (s, e) => CenterBindButton();
             CenterBindButton();
             txtConnectionString.Text = DatabaseConnection.ConnectionString;
-            rootSplitContainer.Enabled = false;
+            mainWorkPanel.Enabled = false;
         }
 
         private void CenterBindButton()
@@ -53,7 +53,7 @@ namespace OPC_CFGCS.UI.Forms
             {
                 lblConnectionStatus.Text = "Ошибка подключения";
                 lblConnectionStatus.ForeColor = Color.DarkRed;
-                rootSplitContainer.Enabled = false;
+                mainWorkPanel.Enabled = false;
                 MessageBox.Show(
                     "Не удалось подключиться к SQL Server.\r\n\r\n" + error,
                     "OPC_CFGCS",
@@ -64,7 +64,7 @@ namespace OPC_CFGCS.UI.Forms
 
             lblConnectionStatus.Text = "Подключено";
             lblConnectionStatus.ForeColor = Color.DarkGreen;
-            rootSplitContainer.Enabled = true;
+            mainWorkPanel.Enabled = true;
 
             psPanel.Reload();
             busPanel.Reload();
@@ -120,7 +120,7 @@ namespace OPC_CFGCS.UI.Forms
 
         private void UpdateBindings()
         {
-            if (!rootSplitContainer.Enabled)
+            if (!mainWorkPanel.Enabled)
             {
                 bindPanel.ClearBindings();
                 return;
