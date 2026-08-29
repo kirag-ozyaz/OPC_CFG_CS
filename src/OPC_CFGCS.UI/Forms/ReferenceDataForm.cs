@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using OPC_CFGCS.Data;
 using OPC_CFGCS.Data.Models;
@@ -53,7 +54,24 @@ namespace OPC_CFGCS.UI.Forms
             _tabs.TabPages.Add(CreateGroupsTab());
             Controls.Add(_tabs);
 
+            LoadFormIcon();
             Load += OnFormLoad;
+        }
+
+        private void LoadFormIcon()
+        {
+            try
+            {
+                var iconPath = Path.Combine(Application.StartupPath, "Assets", "OPC_CFGCS.ico");
+                if (File.Exists(iconPath))
+                {
+                    Icon = new Icon(iconPath);
+                }
+            }
+            catch
+            {
+                // Оставляем иконку по умолчанию, если файл недоступен.
+            }
         }
 
         private void OnFormLoad(object sender, EventArgs e)
@@ -234,33 +252,45 @@ namespace OPC_CFGCS.UI.Forms
             };
         }
 
+        private static DataGridViewTextBoxColumn CreateHiddenIdColumn(string dataPropertyName = "Id")
+        {
+            return new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = dataPropertyName,
+                HeaderText = dataPropertyName,
+                Visible = false
+            };
+        }
+
         private void ConfigureAliasGrid()
         {
-            _aliasesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Id", HeaderText = "Id", Width = 50 });
+            _aliasesGrid.Columns.Add(CreateHiddenIdColumn());
             _aliasesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Name", HeaderText = "Alias", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
             _aliasesGrid.SelectionChanged += (s, e) => LoadSelectedAlias();
         }
 
         private void ConfigureTypesGrid()
         {
-            _typesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Id", HeaderText = "Id", Width = 50 });
+            _typesGrid.Columns.Add(CreateHiddenIdColumn());
             _typesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Name", HeaderText = "Name", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
             _typesGrid.SelectionChanged += (s, e) => LoadSelectedType();
         }
 
         private void ConfigureServerGrid()
         {
-            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "AliasId", HeaderText = "AliasId", Width = 60 });
+            _serversGrid.Columns.Add(CreateHiddenIdColumn("AliasId"));
             _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "AliasName", HeaderText = "Alias", Width = 120 });
             _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "HostName", HeaderText = "HostName", Width = 140 });
             _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerName", HeaderText = "ServerName", Width = 140 });
-            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerType", HeaderText = "ServerType", Width = 70 });
+            _serversGrid.Columns.Add(CreateHiddenIdColumn("ServerType"));
             _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerTypeName", HeaderText = "Тип", Width = 90 });
+            _serversGrid.Columns.Add(CreateHiddenIdColumn());
             _serversGrid.SelectionChanged += (s, e) => LoadSelectedServer();
         }
 
         private void ConfigureParameterGrid()
         {
+            _parametersGrid.Columns.Add(CreateHiddenIdColumn());
             _parametersGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Description", HeaderText = "Описание", Width = 220 });
             _parametersGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ObjectDescription", HeaderText = "Объект", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
             _parametersGrid.SelectionChanged += (s, e) => LoadSelectedParameter();
@@ -268,6 +298,7 @@ namespace OPC_CFGCS.UI.Forms
 
         private void ConfigureGroupGrid()
         {
+            _groupsGrid.Columns.Add(CreateHiddenIdColumn());
             _groupsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerName", HeaderText = "Сервер", Width = 180 });
             _groupsGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Name", HeaderText = "Группа", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
             _groupsGrid.SelectionChanged += (s, e) => LoadSelectedGroup();
@@ -821,7 +852,7 @@ namespace OPC_CFGCS.UI.Forms
                 if (alias != null && alias.Id == id)
                 {
                     row.Selected = true;
-                    grid.CurrentCell = row.Cells[0];
+                    grid.CurrentCell = GetFirstVisibleCell(row);
                     return;
                 }
 
@@ -829,7 +860,7 @@ namespace OPC_CFGCS.UI.Forms
                 if (opcType != null && opcType.Id == id)
                 {
                     row.Selected = true;
-                    grid.CurrentCell = row.Cells[0];
+                    grid.CurrentCell = GetFirstVisibleCell(row);
                     return;
                 }
 
@@ -837,7 +868,7 @@ namespace OPC_CFGCS.UI.Forms
                 if (item != null && item.Id == id)
                 {
                     row.Selected = true;
-                    grid.CurrentCell = row.Cells[0];
+                    grid.CurrentCell = GetFirstVisibleCell(row);
                     return;
                 }
 
@@ -845,7 +876,7 @@ namespace OPC_CFGCS.UI.Forms
                 if (parameter != null && parameter.Id == id)
                 {
                     row.Selected = true;
-                    grid.CurrentCell = row.Cells[0];
+                    grid.CurrentCell = GetFirstVisibleCell(row);
                     return;
                 }
 
@@ -853,9 +884,22 @@ namespace OPC_CFGCS.UI.Forms
                 if (group != null && group.Id == id)
                 {
                     row.Selected = true;
-                    grid.CurrentCell = row.Cells[0];
+                    grid.CurrentCell = GetFirstVisibleCell(row);
                 }
             }
+        }
+
+        private static DataGridViewCell GetFirstVisibleCell(DataGridViewRow row)
+        {
+            foreach (DataGridViewCell cell in row.Cells)
+            {
+                if (cell.OwningColumn.Visible)
+                {
+                    return cell;
+                }
+            }
+
+            return row.Cells[0];
         }
 
         private void ShowValidation(string message)
