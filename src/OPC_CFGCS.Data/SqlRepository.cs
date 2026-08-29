@@ -102,7 +102,11 @@ ORDER BY s.ServerName, g.Name";
         {
             return TryQuery(() =>
             {
-                const string sql = "SELECT Id, AliasId, HostName, ServerName, ServerType FROM dbo.Servers ORDER BY ServerName";
+                const string sql = @"
+SELECT s.Id, s.AliasId, s.HostName, s.ServerName, s.ServerType, a.Alias
+FROM dbo.Servers s
+LEFT JOIN dbo.Alias a ON a.Id = s.AliasId
+ORDER BY s.ServerName";
                 var result = new List<Server>();
 
                 using (var connection = DatabaseConnection.CreateConnection())
@@ -119,7 +123,8 @@ ORDER BY s.ServerName, g.Name";
                                 AliasId = reader.GetInt32(1),
                                 HostName = reader.IsDBNull(2) ? null : reader.GetString(2),
                                 ServerName = reader.IsDBNull(3) ? null : reader.GetString(3),
-                                ServerType = reader.GetByte(4)
+                                ServerType = reader.GetByte(4),
+                                AliasName = reader.IsDBNull(5) ? null : reader.GetString(5)
                             });
                         }
                     }
@@ -127,6 +132,77 @@ ORDER BY s.ServerName, g.Name";
 
                 return result;
             }, new List<Server>());
+        }
+
+        public IList<Alias> GetAliases()
+        {
+            return TryQuery(() =>
+            {
+                const string sql = "SELECT Id, Alias FROM dbo.Alias ORDER BY Alias";
+                var result = new List<Alias>();
+
+                using (var connection = DatabaseConnection.CreateConnection())
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(new Alias
+                            {
+                                Id = reader.GetInt32(0),
+                                Name = reader.IsDBNull(1) ? null : reader.GetString(1)
+                            });
+                        }
+                    }
+                }
+
+                return result;
+            }, new List<Alias>());
+        }
+
+        public int InsertAlias(Alias alias)
+        {
+            const string sql = @"
+INSERT INTO dbo.Alias (Alias)
+VALUES (@name);
+SELECT CAST(SCOPE_IDENTITY() AS int);";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@name", SqlDbType.VarChar, 50).Value = alias.Name;
+                connection.Open();
+                return (int)command.ExecuteScalar();
+            }
+        }
+
+        public void UpdateAlias(Alias alias)
+        {
+            const string sql = "UPDATE dbo.Alias SET Alias = @name WHERE Id = @id";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@id", SqlDbType.Int).Value = alias.Id;
+                command.Parameters.Add("@name", SqlDbType.VarChar, 50).Value = alias.Name;
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public void DeleteAlias(int id)
+        {
+            const string sql = "DELETE FROM dbo.Alias WHERE Id = @id";
+
+            using (var connection = DatabaseConnection.CreateConnection())
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
         }
 
         public int InsertServer(Server server)

@@ -12,17 +12,21 @@ namespace OPC_CFGCS.UI.Forms
         private readonly SqlRepository _repository = new SqlRepository();
 
         private readonly TabControl _tabs = new TabControl { Dock = DockStyle.Fill };
+        private readonly DataGridView _aliasesGrid = CreateGrid();
         private readonly DataGridView _serversGrid = CreateGrid();
         private readonly DataGridView _parametersGrid = CreateGrid();
         private readonly DataGridView _groupsGrid = CreateGrid();
+        private readonly TextBox _txtAliasName = new TextBox();
         private readonly TextBox _txtServerHost = new TextBox();
         private readonly TextBox _txtServerName = new TextBox();
+        private readonly ComboBox _cmbServerAlias = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
         private readonly ComboBox _cmbServerType = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
         private readonly TextBox _txtParameterDescription = new TextBox();
         private readonly TextBox _txtParameterObject = new TextBox();
         private readonly ComboBox _cmbGroupServer = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
         private readonly TextBox _txtGroupName = new TextBox();
 
+        private BindingList<Alias> _aliases;
         private BindingList<Server> _servers;
         private BindingList<Parameter> _parameters;
         private BindingList<OpcGroup> _groups;
@@ -42,6 +46,7 @@ namespace OPC_CFGCS.UI.Forms
             _cmbServerType.DisplayMember = "Text";
             _cmbServerType.ValueMember = "Value";
 
+            _tabs.TabPages.Add(CreateAliasesTab());
             _tabs.TabPages.Add(CreateServersTab());
             _tabs.TabPages.Add(CreateParametersTab());
             _tabs.TabPages.Add(CreateGroupsTab());
@@ -55,6 +60,23 @@ namespace OPC_CFGCS.UI.Forms
             ReloadAll();
         }
 
+        private TabPage CreateAliasesTab()
+        {
+            var page = new TabPage("Alias");
+            var layout = CreateTabLayout(
+                _aliasesGrid,
+                new[]
+                {
+                    Tuple.Create("Alias", (Control)_txtAliasName)
+                },
+                OnAddAlias,
+                OnSaveAlias,
+                OnDeleteAlias);
+            page.Controls.Add(layout);
+            ConfigureAliasGrid();
+            return page;
+        }
+
         private TabPage CreateServersTab()
         {
             var page = new TabPage("OPC-серверы");
@@ -62,6 +84,7 @@ namespace OPC_CFGCS.UI.Forms
                 _serversGrid,
                 new[]
                 {
+                    Tuple.Create("Alias", (Control)_cmbServerAlias),
                     Tuple.Create("HostName", (Control)_txtServerHost),
                     Tuple.Create("ServerName", (Control)_txtServerName),
                     Tuple.Create("Тип", (Control)_cmbServerType)
@@ -71,6 +94,8 @@ namespace OPC_CFGCS.UI.Forms
                 OnDeleteServer);
             page.Controls.Add(layout);
             ConfigureServerGrid();
+            _cmbServerAlias.DisplayMember = "Name";
+            _cmbServerAlias.ValueMember = "Id";
             return page;
         }
 
@@ -190,10 +215,17 @@ namespace OPC_CFGCS.UI.Forms
             };
         }
 
+        private void ConfigureAliasGrid()
+        {
+            _aliasesGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Name", HeaderText = "Alias", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
+            _aliasesGrid.SelectionChanged += (s, e) => LoadSelectedAlias();
+        }
+
         private void ConfigureServerGrid()
         {
-            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "HostName", HeaderText = "HostName", Width = 180 });
-            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerName", HeaderText = "ServerName", Width = 180 });
+            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "AliasName", HeaderText = "Alias", Width = 140 });
+            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "HostName", HeaderText = "HostName", Width = 160 });
+            _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerName", HeaderText = "ServerName", Width = 160 });
             _serversGrid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerType", HeaderText = "Тип", Width = 60 });
             _serversGrid.SelectionChanged += (s, e) => LoadSelectedServer();
         }
@@ -214,13 +246,21 @@ namespace OPC_CFGCS.UI.Forms
 
         private void ReloadAll()
         {
+            _aliases = new BindingList<Alias>(_repository.GetAliases());
             _servers = new BindingList<Server>(_repository.GetServers());
             _parameters = new BindingList<Parameter>(_repository.GetParameters());
             _groups = new BindingList<OpcGroup>(_repository.GetOpcGroups());
+            _aliasesGrid.DataSource = _aliases;
             _serversGrid.DataSource = _servers;
             _parametersGrid.DataSource = _parameters;
             _groupsGrid.DataSource = _groups;
+            _cmbServerAlias.DataSource = new BindingList<Alias>(_repository.GetAliases());
             _cmbGroupServer.DataSource = new BindingList<Server>(_repository.GetServers());
+        }
+
+        private Alias GetSelectedAlias()
+        {
+            return _aliasesGrid.CurrentRow == null ? null : _aliasesGrid.CurrentRow.DataBoundItem as Alias;
         }
 
         private Server GetSelectedServer()
@@ -238,17 +278,25 @@ namespace OPC_CFGCS.UI.Forms
             return _groupsGrid.CurrentRow == null ? null : _groupsGrid.CurrentRow.DataBoundItem as OpcGroup;
         }
 
+        private void LoadSelectedAlias()
+        {
+            var alias = GetSelectedAlias();
+            _txtAliasName.Text = alias == null ? string.Empty : alias.Name ?? string.Empty;
+        }
+
         private void LoadSelectedServer()
         {
             var server = GetSelectedServer();
             if (server == null)
             {
+                _cmbServerAlias.SelectedIndex = -1;
                 _txtServerHost.Clear();
                 _txtServerName.Clear();
                 _cmbServerType.SelectedIndex = 0;
                 return;
             }
 
+            _cmbServerAlias.SelectedValue = server.AliasId;
             _txtServerHost.Text = server.HostName ?? string.Empty;
             _txtServerName.Text = server.ServerName ?? string.Empty;
             SelectServerType(server.ServerType);
@@ -282,9 +330,76 @@ namespace OPC_CFGCS.UI.Forms
             _txtGroupName.Text = group.Name ?? string.Empty;
         }
 
+        private void OnAddAlias(object sender, EventArgs e)
+        {
+            _aliasesGrid.ClearSelection();
+            _txtAliasName.Clear();
+            _txtAliasName.Focus();
+        }
+
+        private void OnSaveAlias(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(_txtAliasName.Text))
+            {
+                ShowValidation("Укажите Alias.");
+                return;
+            }
+
+            try
+            {
+                var alias = GetSelectedAlias() ?? new Alias();
+                alias.Name = _txtAliasName.Text.Trim();
+
+                if (alias.Id > 0)
+                {
+                    _repository.UpdateAlias(alias);
+                }
+                else
+                {
+                    alias.Id = _repository.InsertAlias(alias);
+                }
+
+                ReloadAll();
+                SelectAliasRow(alias.Id);
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex);
+            }
+        }
+
+        private void OnDeleteAlias(object sender, EventArgs e)
+        {
+            var alias = GetSelectedAlias();
+            if (alias == null)
+            {
+                return;
+            }
+
+            if (MessageBox.Show(
+                "Удалить alias \"" + alias.Name + "\"?",
+                Text,
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question) != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                _repository.DeleteAlias(alias.Id);
+                ReloadAll();
+            }
+            catch (Exception ex)
+            {
+                ShowError(ex);
+            }
+        }
+
         private void OnAddServer(object sender, EventArgs e)
         {
             _serversGrid.ClearSelection();
+            _cmbServerAlias.SelectedIndex = _cmbServerAlias.Items.Count > 0 ? 0 : -1;
             _txtServerHost.Clear();
             _txtServerName.Clear();
             SelectServerType(0);
@@ -293,6 +408,12 @@ namespace OPC_CFGCS.UI.Forms
 
         private void OnSaveServer(object sender, EventArgs e)
         {
+            if (_cmbServerAlias.SelectedValue == null)
+            {
+                ShowValidation("Выберите Alias.");
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(_txtServerName.Text))
             {
                 ShowValidation("Укажите ServerName.");
@@ -302,10 +423,10 @@ namespace OPC_CFGCS.UI.Forms
             try
             {
                 var server = GetSelectedServer() ?? new Server();
+                server.AliasId = (int)_cmbServerAlias.SelectedValue;
                 server.HostName = _txtServerHost.Text.Trim();
                 server.ServerName = _txtServerName.Text.Trim();
                 server.ServerType = GetSelectedServerType();
-                server.AliasId = server.Id > 0 ? server.AliasId : 0;
 
                 if (server.Id > 0)
                 {
@@ -516,6 +637,12 @@ namespace OPC_CFGCS.UI.Forms
             LoadSelectedServer();
         }
 
+        private void SelectAliasRow(int id)
+        {
+            SelectGridRow(_aliasesGrid, id);
+            LoadSelectedAlias();
+        }
+
         private void SelectParameterRow(int id)
         {
             SelectGridRow(_parametersGrid, id);
@@ -532,6 +659,14 @@ namespace OPC_CFGCS.UI.Forms
         {
             foreach (DataGridViewRow row in grid.Rows)
             {
+                var alias = row.DataBoundItem as Alias;
+                if (alias != null && alias.Id == id)
+                {
+                    row.Selected = true;
+                    grid.CurrentCell = row.Cells[0];
+                    return;
+                }
+
                 var item = row.DataBoundItem as Server;
                 if (item != null && item.Id == id)
                 {
