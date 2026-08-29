@@ -57,6 +57,9 @@ namespace OPC_CFGCS.UI.Forms
             this.tabPs = new System.Windows.Forms.TabPage();
             this.tabBus = new System.Windows.Forms.TabPage();
             this.tabSwitch = new System.Windows.Forms.TabPage();
+            this.psPanel = new OPC_CFGCS.UI.Controls.SchemaObjectPanel();
+            this.busPanel = new OPC_CFGCS.UI.Controls.SchemaObjectPanel();
+            this.switchPanel = new OPC_CFGCS.UI.Controls.SchemaObjectPanel();
             this.bindButtonPanel = new System.Windows.Forms.Panel();
             this.btnBind = new System.Windows.Forms.Button();
             this.tagsPanel = new OPC_CFGCS.UI.Controls.TagsPanel();
@@ -235,6 +238,7 @@ namespace OPC_CFGCS.UI.Forms
             this.psPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.psPanel.Location = new System.Drawing.Point(3, 3);
             this.psPanel.Name = "psPanel";
+            this.psPanel.ObjectType = SchemaObjectType.PowerStation;
             this.psPanel.Size = new System.Drawing.Size(584, 212);
             this.psPanel.TabIndex = 0;
             this.psPanel.CurrentObjectChanged += new System.EventHandler(this.OnSchemaObjectChanged);
@@ -255,6 +259,7 @@ namespace OPC_CFGCS.UI.Forms
             this.busPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.busPanel.Location = new System.Drawing.Point(3, 3);
             this.busPanel.Name = "busPanel";
+            this.busPanel.ObjectType = SchemaObjectType.CellBus;
             this.busPanel.Size = new System.Drawing.Size(584, 342);
             this.busPanel.TabIndex = 0;
             this.busPanel.CurrentObjectChanged += new System.EventHandler(this.OnSchemaObjectChanged);
@@ -275,6 +280,7 @@ namespace OPC_CFGCS.UI.Forms
             this.switchPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.switchPanel.Location = new System.Drawing.Point(3, 3);
             this.switchPanel.Name = "switchPanel";
+            this.switchPanel.ObjectType = SchemaObjectType.CellSwitch;
             this.switchPanel.Size = new System.Drawing.Size(584, 342);
             this.switchPanel.TabIndex = 0;
             this.switchPanel.CurrentObjectChanged += new System.EventHandler(this.OnSchemaObjectChanged);

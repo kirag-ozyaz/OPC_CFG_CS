@@ -10,16 +10,34 @@ namespace OPC_CFGCS.UI.Controls
 {
     public sealed class SchemaObjectPanel : UserControl
     {
-        private readonly SchemaObjectType _objectType;
+        private SchemaObjectType _objectType = SchemaObjectType.PowerStation;
         private readonly SqlRepository _repository = new SqlRepository();
         private readonly DataGridView _grid = new DataGridView();
         private BindingList<SchemaObject> _items;
 
         public event EventHandler CurrentObjectChanged;
 
-        public SchemaObjectPanel(SchemaObjectType objectType)
+        [DefaultValue(SchemaObjectType.PowerStation)]
+        [Category("Behavior")]
+        public SchemaObjectType ObjectType
         {
-            _objectType = objectType;
+            get { return _objectType; }
+            set { _objectType = value; }
+        }
+
+        public SchemaObjectPanel()
+        {
+            InitializeControl();
+        }
+
+        public SchemaObjectPanel(SchemaObjectType objectType)
+            : this()
+        {
+            ObjectType = objectType;
+        }
+
+        private void InitializeControl()
+        {
             Dock = DockStyle.Fill;
 
             _grid.Dock = DockStyle.Fill;
@@ -56,6 +74,11 @@ namespace OPC_CFGCS.UI.Controls
 
         public void Reload()
         {
+            if (IsInDesignMode())
+            {
+                return;
+            }
+
             var selectedId = CurrentObject == null ? (int?)null : CurrentObject.Id;
             LoadData();
             if (selectedId.HasValue)
@@ -66,6 +89,13 @@ namespace OPC_CFGCS.UI.Controls
 
         private void LoadData()
         {
+            if (IsInDesignMode())
+            {
+                _items = new BindingList<SchemaObject>();
+                _grid.DataSource = _items;
+                return;
+            }
+
             switch (_objectType)
             {
                 case SchemaObjectType.PowerStation:
@@ -85,6 +115,11 @@ namespace OPC_CFGCS.UI.Controls
             _grid.DataSource = _items;
         }
 
+        private static bool IsInDesignMode()
+        {
+            return LicenseManager.UsageMode == LicenseUsageMode.Designtime;
+        }
+
         private void SelectById(int id)
         {
             foreach (DataGridViewRow row in _grid.Rows)
@@ -101,6 +136,11 @@ namespace OPC_CFGCS.UI.Controls
 
         private void OnSelectionChanged(object sender, EventArgs e)
         {
+            if (IsInDesignMode())
+            {
+                return;
+            }
+
             var current = CurrentObject;
             if (current != null)
             {
