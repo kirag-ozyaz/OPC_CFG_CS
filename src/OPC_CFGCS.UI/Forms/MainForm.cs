@@ -11,18 +11,14 @@ namespace OPC_CFGCS.UI.Forms
     public sealed partial class MainForm : Form
     {
         private SchemaObjectType _currentSchemaType = SchemaObjectType.PowerStation;
+        private SchemaObjectPanel psPanel;
+        private SchemaObjectPanel busPanel;
+        private SchemaObjectPanel switchPanel;
 
         public MainForm()
         {
-            psPanel = new SchemaObjectPanel(SchemaObjectType.PowerStation);
-            busPanel = new SchemaObjectPanel(SchemaObjectType.CellBus);
-            switchPanel = new SchemaObjectPanel(SchemaObjectType.CellSwitch);
-
             InitializeComponent();
-
-            psPanel.CurrentObjectChanged += OnSchemaObjectChanged;
-            busPanel.CurrentObjectChanged += OnSchemaObjectChanged;
-            switchPanel.CurrentObjectChanged += OnSchemaObjectChanged;
+            InitializeSchemaPanels();
 
             LoadApplicationIcons();
             bindButtonPanel.Resize += (s, e) => CenterBindButton();
@@ -35,6 +31,25 @@ namespace OPC_CFGCS.UI.Forms
         {
             btnBind.Left = Math.Max(0, (bindButtonPanel.ClientSize.Width - btnBind.Width) / 2);
             btnBind.Top = Math.Max(0, (bindButtonPanel.ClientSize.Height - btnBind.Height) / 2);
+        }
+
+        private void InitializeSchemaPanels()
+        {
+            psPanel = CreateSchemaPanel(tabPs, SchemaObjectType.PowerStation, "psPanel");
+            busPanel = CreateSchemaPanel(tabBus, SchemaObjectType.CellBus, "busPanel");
+            switchPanel = CreateSchemaPanel(tabSwitch, SchemaObjectType.CellSwitch, "switchPanel");
+        }
+
+        private SchemaObjectPanel CreateSchemaPanel(TabPage tab, SchemaObjectType objectType, string name)
+        {
+            var panel = new SchemaObjectPanel(objectType)
+            {
+                Dock = DockStyle.Fill,
+                Name = name
+            };
+            panel.CurrentObjectChanged += OnSchemaObjectChanged;
+            tab.Controls.Add(panel);
+            return panel;
         }
 
         private void LoadApplicationIcons()

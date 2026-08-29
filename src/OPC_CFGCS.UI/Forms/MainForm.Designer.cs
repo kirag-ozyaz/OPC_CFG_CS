@@ -1,6 +1,5 @@
 using System.Drawing;
 using System.Windows.Forms;
-using OPC_CFGCS.Core;
 using OPC_CFGCS.UI.Controls;
 
 namespace OPC_CFGCS.UI.Forms
@@ -25,9 +24,6 @@ namespace OPC_CFGCS.UI.Forms
         private TabPage tabSwitch;
         private TagsPanel tagsPanel;
         private BindPanel bindPanel;
-        private SchemaObjectPanel psPanel;
-        private SchemaObjectPanel busPanel;
-        private SchemaObjectPanel switchPanel;
         private Button btnBind;
 
         protected override void Dispose(bool disposing)
@@ -55,7 +51,6 @@ namespace OPC_CFGCS.UI.Forms
             this.tabPs = new System.Windows.Forms.TabPage();
             this.tabBus = new System.Windows.Forms.TabPage();
             this.tabSwitch = new System.Windows.Forms.TabPage();
-            // psPanel, busPanel, switchPanel создаются в MainForm() до InitializeComponent()
             this.bindPanel = new OPC_CFGCS.UI.Controls.BindPanel();
             this.bindButtonPanel = new System.Windows.Forms.Panel();
             this.btnBind = new System.Windows.Forms.Button();
@@ -199,7 +194,6 @@ namespace OPC_CFGCS.UI.Forms
             // 
             // tabPs
             // 
-            this.tabPs.Controls.Add(this.psPanel);
             this.tabPs.Location = new System.Drawing.Point(4, 22);
             this.tabPs.Name = "tabPs";
             this.tabPs.Padding = new System.Windows.Forms.Padding(3);
@@ -208,17 +202,8 @@ namespace OPC_CFGCS.UI.Forms
             this.tabPs.Text = "ПС";
             this.tabPs.UseVisualStyleBackColor = true;
             // 
-            // psPanel
-            // 
-            this.psPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.psPanel.Location = new System.Drawing.Point(3, 3);
-            this.psPanel.Name = "psPanel";
-            this.psPanel.Size = new System.Drawing.Size(476, 464);
-            this.psPanel.TabIndex = 0;
-            // 
             // tabBus
             // 
-            this.tabBus.Controls.Add(this.busPanel);
             this.tabBus.Location = new System.Drawing.Point(4, 22);
             this.tabBus.Name = "tabBus";
             this.tabBus.Padding = new System.Windows.Forms.Padding(3);
@@ -227,17 +212,8 @@ namespace OPC_CFGCS.UI.Forms
             this.tabBus.Text = "Шина";
             this.tabBus.UseVisualStyleBackColor = true;
             // 
-            // busPanel
-            // 
-            this.busPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.busPanel.Location = new System.Drawing.Point(3, 3);
-            this.busPanel.Name = "busPanel";
-            this.busPanel.Size = new System.Drawing.Size(476, 464);
-            this.busPanel.TabIndex = 0;
-            // 
             // tabSwitch
             // 
-            this.tabSwitch.Controls.Add(this.switchPanel);
             this.tabSwitch.Location = new System.Drawing.Point(4, 22);
             this.tabSwitch.Name = "tabSwitch";
             this.tabSwitch.Padding = new System.Windows.Forms.Padding(3);
@@ -245,14 +221,6 @@ namespace OPC_CFGCS.UI.Forms
             this.tabSwitch.TabIndex = 2;
             this.tabSwitch.Text = "Выключатель";
             this.tabSwitch.UseVisualStyleBackColor = true;
-            // 
-            // switchPanel
-            // 
-            this.switchPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.switchPanel.Location = new System.Drawing.Point(3, 3);
-            this.switchPanel.Name = "switchPanel";
-            this.switchPanel.Size = new System.Drawing.Size(476, 464);
-            this.switchPanel.TabIndex = 0;
             // 
             // bindPanel
             // 
