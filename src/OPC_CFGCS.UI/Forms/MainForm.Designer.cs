@@ -42,7 +42,6 @@ namespace OPC_CFGCS.UI.Forms
 
         private void InitializeComponent()
         {
-<<<<<<< HEAD
             this.connectionPanel = new System.Windows.Forms.Panel();
             this.connectionLayout = new System.Windows.Forms.TableLayoutPanel();
             this.lblConnectionString = new System.Windows.Forms.Label();
@@ -56,32 +55,12 @@ namespace OPC_CFGCS.UI.Forms
             this.tabPs = new System.Windows.Forms.TabPage();
             this.tabBus = new System.Windows.Forms.TabPage();
             this.tabSwitch = new System.Windows.Forms.TabPage();
+            // psPanel, busPanel, switchPanel создаются в MainForm() до InitializeComponent()
             this.bindPanel = new OPC_CFGCS.UI.Controls.BindPanel();
             this.bindButtonPanel = new System.Windows.Forms.Panel();
             this.btnBind = new System.Windows.Forms.Button();
             this.tagsPanel = new OPC_CFGCS.UI.Controls.TagsPanel();
             this.bindHeaderLabel = new System.Windows.Forms.Label();
-=======
-            this.connectionPanel = new Panel();
-            this.connectionLayout = new TableLayoutPanel();
-            this.lblConnectionString = new Label();
-            this.txtConnectionString = new TextBox();
-            this.btnConnect = new Button();
-            this.lblConnectionStatus = new Label();
-            this.mainWorkPanel = new Panel();
-            this.gridsLayout = new TableLayoutPanel();
-            this.schemaPanel = new Panel();
-            this.schemaTabs = new TabControl();
-            this.tabPs = new TabPage();
-            this.tabBus = new TabPage();
-            this.tabSwitch = new TabPage();
-            // psPanel, busPanel, switchPanel создаются в MainForm() до InitializeComponent()
-            this.bindButtonPanel = new Panel();
-            this.btnBind = new Button();
-            this.bindHeaderLabel = new Label();
-            this.tagsPanel = new TagsPanel();
-            this.bindPanel = new BindPanel();
->>>>>>> 017d33f (Fix NullReferenceException: create SchemaObjectPanels before InitializeComponent)
             this.connectionPanel.SuspendLayout();
             this.connectionLayout.SuspendLayout();
             this.mainWorkPanel.SuspendLayout();
@@ -236,19 +215,14 @@ namespace OPC_CFGCS.UI.Forms
             this.psPanel.Name = "psPanel";
             this.psPanel.Size = new System.Drawing.Size(476, 464);
             this.psPanel.TabIndex = 0;
-<<<<<<< HEAD
-            this.psPanel.CurrentObjectChanged += new System.EventHandler(this.OnSchemaObjectChanged);
             // 
-=======
-            //
->>>>>>> 017d33f (Fix NullReferenceException: create SchemaObjectPanels before InitializeComponent)
             // tabBus
             // 
             this.tabBus.Controls.Add(this.busPanel);
             this.tabBus.Location = new System.Drawing.Point(4, 22);
             this.tabBus.Name = "tabBus";
             this.tabBus.Padding = new System.Windows.Forms.Padding(3);
-            this.tabBus.Size = new System.Drawing.Size(590, 564);
+            this.tabBus.Size = new System.Drawing.Size(482, 470);
             this.tabBus.TabIndex = 1;
             this.tabBus.Text = "Шина";
             this.tabBus.UseVisualStyleBackColor = true;
@@ -258,21 +232,16 @@ namespace OPC_CFGCS.UI.Forms
             this.busPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.busPanel.Location = new System.Drawing.Point(3, 3);
             this.busPanel.Name = "busPanel";
-            this.busPanel.Size = new System.Drawing.Size(584, 558);
+            this.busPanel.Size = new System.Drawing.Size(476, 464);
             this.busPanel.TabIndex = 0;
-<<<<<<< HEAD
-            this.busPanel.CurrentObjectChanged += new System.EventHandler(this.OnSchemaObjectChanged);
             // 
-=======
-            //
->>>>>>> 017d33f (Fix NullReferenceException: create SchemaObjectPanels before InitializeComponent)
             // tabSwitch
             // 
             this.tabSwitch.Controls.Add(this.switchPanel);
             this.tabSwitch.Location = new System.Drawing.Point(4, 22);
             this.tabSwitch.Name = "tabSwitch";
             this.tabSwitch.Padding = new System.Windows.Forms.Padding(3);
-            this.tabSwitch.Size = new System.Drawing.Size(590, 564);
+            this.tabSwitch.Size = new System.Drawing.Size(482, 470);
             this.tabSwitch.TabIndex = 2;
             this.tabSwitch.Text = "Выключатель";
             this.tabSwitch.UseVisualStyleBackColor = true;
@@ -282,10 +251,8 @@ namespace OPC_CFGCS.UI.Forms
             this.switchPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.switchPanel.Location = new System.Drawing.Point(3, 3);
             this.switchPanel.Name = "switchPanel";
-            this.switchPanel.Size = new System.Drawing.Size(584, 558);
+            this.switchPanel.Size = new System.Drawing.Size(476, 464);
             this.switchPanel.TabIndex = 0;
-<<<<<<< HEAD
-            this.switchPanel.CurrentObjectChanged += new System.EventHandler(this.OnSchemaObjectChanged);
             // 
             // bindPanel
             // 
@@ -295,9 +262,6 @@ namespace OPC_CFGCS.UI.Forms
             this.bindPanel.Size = new System.Drawing.Size(490, 120);
             this.bindPanel.TabIndex = 1;
             // 
-=======
-            //
->>>>>>> 017d33f (Fix NullReferenceException: create SchemaObjectPanels before InitializeComponent)
             // bindButtonPanel
             // 
             this.bindButtonPanel.Controls.Add(this.btnBind);
@@ -360,7 +324,6 @@ namespace OPC_CFGCS.UI.Forms
             this.tabSwitch.ResumeLayout(false);
             this.bindButtonPanel.ResumeLayout(false);
             this.ResumeLayout(false);
-
         }
     }
 }
