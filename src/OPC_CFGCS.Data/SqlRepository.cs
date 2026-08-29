@@ -8,6 +8,8 @@ namespace OPC_CFGCS.Data
 {
     public sealed class SqlRepository
     {
+        public string LastError { get; private set; }
+
         public IList<Tag> GetTags()
         {
             const string sql = @"
@@ -18,33 +20,36 @@ FROM dbo.Tags t
 LEFT JOIN dbo.Servers s ON s.Id = t.ServerId
 ORDER BY t.Area, t.Source, t.ServerId";
 
-            return QueryTags(sql);
+            return TryQuery(() => QueryTags(sql), new List<Tag>());
         }
 
         public IList<Tag2Group> GetTag2Groups()
         {
-            const string sql = "SELECT Id, GroupId, TagId FROM dbo.Tag2Group ORDER BY TagId";
-            var result = new List<Tag2Group>();
-
-            using (var connection = DatabaseConnection.CreateConnection())
-            using (var command = new SqlCommand(sql, connection))
+            return TryQuery(() =>
             {
-                connection.Open();
-                using (var reader = command.ExecuteReader())
+                const string sql = "SELECT Id, GroupId, TagId FROM dbo.Tag2Group ORDER BY TagId";
+                var result = new List<Tag2Group>();
+
+                using (var connection = DatabaseConnection.CreateConnection())
+                using (var command = new SqlCommand(sql, connection))
                 {
-                    while (reader.Read())
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
                     {
-                        result.Add(new Tag2Group
+                        while (reader.Read())
                         {
-                            Id = reader.GetInt32(0),
-                            GroupId = reader.GetInt32(1),
-                            TagId = reader.GetInt32(2)
-                        });
+                            result.Add(new Tag2Group
+                            {
+                                Id = reader.GetInt32(0),
+                                GroupId = reader.GetInt32(1),
+                                TagId = reader.GetInt32(2)
+                            });
+                        }
                     }
                 }
-            }
 
-            return result;
+                return result;
+            }, new List<Tag2Group>());
         }
 
         public IList<OpcGroup> GetOpcGroups(int? serverId = null)
@@ -61,61 +66,67 @@ INNER JOIN dbo.Servers s ON s.Id = g.ServerId
 WHERE g.Deleted = 0
 ORDER BY s.ServerName, g.Name";
 
-            var result = new List<OpcGroup>();
-
-            using (var connection = DatabaseConnection.CreateConnection())
-            using (var command = new SqlCommand(sql, connection))
+            return TryQuery(() =>
             {
-                if (serverId.HasValue)
-                {
-                    command.Parameters.Add("@serverId", SqlDbType.Int).Value = serverId.Value;
-                }
+                var result = new List<OpcGroup>();
 
-                connection.Open();
-                using (var reader = command.ExecuteReader())
+                using (var connection = DatabaseConnection.CreateConnection())
+                using (var command = new SqlCommand(sql, connection))
                 {
-                    while (reader.Read())
+                    if (serverId.HasValue)
                     {
-                        result.Add(new OpcGroup
+                        command.Parameters.Add("@serverId", SqlDbType.Int).Value = serverId.Value;
+                    }
+
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
                         {
-                            Id = reader.GetInt32(0),
-                            ServerId = reader.GetInt32(1),
-                            Name = reader.IsDBNull(2) ? null : reader.GetString(2),
-                            ServerName = reader.IsDBNull(3) ? null : reader.GetString(3)
-                        });
+                            result.Add(new OpcGroup
+                            {
+                                Id = reader.GetInt32(0),
+                                ServerId = reader.GetInt32(1),
+                                Name = reader.IsDBNull(2) ? null : reader.GetString(2),
+                                ServerName = reader.IsDBNull(3) ? null : reader.GetString(3)
+                            });
+                        }
                     }
                 }
-            }
 
-            return result;
+                return result;
+            }, new List<OpcGroup>());
         }
 
         public IList<Server> GetServers()
         {
-            const string sql = "SELECT Id, AliasId, HostName, ServerName, ServerType FROM dbo.Servers ORDER BY ServerName";
-            var result = new List<Server>();
-
-            using (var connection = DatabaseConnection.CreateConnection())
-            using (var command = new SqlCommand(sql, connection))
+            return TryQuery(() =>
             {
-                connection.Open();
-                using (var reader = command.ExecuteReader())
+                const string sql = "SELECT Id, AliasId, HostName, ServerName, ServerType FROM dbo.Servers ORDER BY ServerName";
+                var result = new List<Server>();
+
+                using (var connection = DatabaseConnection.CreateConnection())
+                using (var command = new SqlCommand(sql, connection))
                 {
-                    while (reader.Read())
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
                     {
-                        result.Add(new Server
+                        while (reader.Read())
                         {
-                            Id = reader.GetInt32(0),
-                            AliasId = reader.GetInt32(1),
-                            HostName = reader.IsDBNull(2) ? null : reader.GetString(2),
-                            ServerName = reader.IsDBNull(3) ? null : reader.GetString(3),
-                            ServerType = reader.GetByte(4)
-                        });
+                            result.Add(new Server
+                            {
+                                Id = reader.GetInt32(0),
+                                AliasId = reader.GetInt32(1),
+                                HostName = reader.IsDBNull(2) ? null : reader.GetString(2),
+                                ServerName = reader.IsDBNull(3) ? null : reader.GetString(3),
+                                ServerType = reader.GetByte(4)
+                            });
+                        }
                     }
                 }
-            }
 
-            return result;
+                return result;
+            }, new List<Server>());
         }
 
         public int InsertServer(Server server)
@@ -269,32 +280,35 @@ SELECT CAST(SCOPE_IDENTITY() AS int);";
 
         public IList<Parameter> GetParameters()
         {
-            const string sql = @"
+            return TryQuery(() =>
+            {
+                const string sql = @"
 SELECT Id, Description, ObjectDescription
 FROM dbo.Parameters
 ORDER BY Description, ObjectDescription";
 
-            var result = new List<Parameter>();
+                var result = new List<Parameter>();
 
-            using (var connection = DatabaseConnection.CreateConnection())
-            using (var command = new SqlCommand(sql, connection))
-            {
-                connection.Open();
-                using (var reader = command.ExecuteReader())
+                using (var connection = DatabaseConnection.CreateConnection())
+                using (var command = new SqlCommand(sql, connection))
                 {
-                    while (reader.Read())
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
                     {
-                        result.Add(new Parameter
+                        while (reader.Read())
                         {
-                            Id = reader.GetInt32(0),
-                            Description = reader.IsDBNull(1) ? null : reader.GetString(1),
-                            ObjectDescription = reader.IsDBNull(2) ? null : reader.GetString(2)
-                        });
+                            result.Add(new Parameter
+                            {
+                                Id = reader.GetInt32(0),
+                                Description = reader.IsDBNull(1) ? null : reader.GetString(1),
+                                ObjectDescription = reader.IsDBNull(2) ? null : reader.GetString(2)
+                            });
+                        }
                     }
                 }
-            }
 
-            return result;
+                return result;
+            }, new List<Parameter>());
         }
 
         public IList<SchemaObject> GetPowerStations()
@@ -309,7 +323,7 @@ FROM (
 ) ps
 ORDER BY ParentTypeName, ParentName";
 
-            return QuerySchemaObjects(sql);
+            return TryQuery(() => QuerySchemaObjects(sql), new List<SchemaObject>());
         }
 
         public IList<SchemaObject> GetCellBuses()
@@ -322,7 +336,7 @@ FROM (
 ) bus
 ORDER BY ParentTypeName, ParentName, Type, Name";
 
-            return QuerySchemaObjects(sql);
+            return TryQuery(() => QuerySchemaObjects(sql), new List<SchemaObject>());
         }
 
         public IList<SchemaObject> GetCellSwitches()
@@ -336,57 +350,63 @@ FROM (
 ) sw
 ORDER BY ParentTypeName, ParentName, Type, Name";
 
-            return QuerySchemaObjects(sql);
+            return TryQuery(() => QuerySchemaObjects(sql), new List<SchemaObject>());
         }
 
         public IList<TagBinding> GetBindingsByObjectId(int objectId)
         {
-            const string sql = "SELECT Area, Source FROM dbo.Tags WHERE ObjectId = @objectId ORDER BY Area, Source";
-            var result = new List<TagBinding>();
-
-            using (var connection = DatabaseConnection.CreateConnection())
-            using (var command = new SqlCommand(sql, connection))
+            return TryQuery(() =>
             {
-                command.Parameters.Add("@objectId", SqlDbType.Int).Value = objectId;
-                connection.Open();
-                using (var reader = command.ExecuteReader())
+                const string sql = "SELECT Area, Source FROM dbo.Tags WHERE ObjectId = @objectId ORDER BY Area, Source";
+                var result = new List<TagBinding>();
+
+                using (var connection = DatabaseConnection.CreateConnection())
+                using (var command = new SqlCommand(sql, connection))
                 {
-                    while (reader.Read())
+                    command.Parameters.Add("@objectId", SqlDbType.Int).Value = objectId;
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
                     {
-                        result.Add(new TagBinding
+                        while (reader.Read())
                         {
-                            Area = reader.IsDBNull(0) ? null : reader.GetString(0),
-                            Source = reader.IsDBNull(1) ? null : reader.GetString(1)
-                        });
+                            result.Add(new TagBinding
+                            {
+                                Area = reader.IsDBNull(0) ? null : reader.GetString(0),
+                                Source = reader.IsDBNull(1) ? null : reader.GetString(1)
+                            });
+                        }
                     }
                 }
-            }
 
-            return result;
+                return result;
+            }, new List<TagBinding>());
         }
 
         public HashSet<int> GetBoundObjectIds()
         {
-            const string sql = "SELECT DISTINCT ObjectId FROM dbo.Tags WHERE ObjectId IS NOT NULL";
-            var result = new HashSet<int>();
-
-            using (var connection = DatabaseConnection.CreateConnection())
-            using (var command = new SqlCommand(sql, connection))
+            return TryQuery(() =>
             {
-                connection.Open();
-                using (var reader = command.ExecuteReader())
+                const string sql = "SELECT DISTINCT ObjectId FROM dbo.Tags WHERE ObjectId IS NOT NULL";
+                var result = new HashSet<int>();
+
+                using (var connection = DatabaseConnection.CreateConnection())
+                using (var command = new SqlCommand(sql, connection))
                 {
-                    while (reader.Read())
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
                     {
-                        if (!reader.IsDBNull(0))
+                        while (reader.Read())
                         {
-                            result.Add(reader.GetInt32(0));
+                            if (!reader.IsDBNull(0))
+                            {
+                                result.Add(reader.GetInt32(0));
+                            }
                         }
                     }
                 }
-            }
 
-            return result;
+                return result;
+            }, new HashSet<int>());
         }
 
         public void InsertTag2Group(int groupId, int tagId)
@@ -459,18 +479,21 @@ WHERE Id = @id";
             }
         }
 
-        public void UpdateTagObjectId(int tagId, int? objectId)
+        public bool UpdateTagObjectId(int tagId, int? objectId)
         {
-            const string sql = "UPDATE dbo.Tags SET ObjectId = @objectId WHERE Id = @tagId";
-
-            using (var connection = DatabaseConnection.CreateConnection())
-            using (var command = new SqlCommand(sql, connection))
+            return TryExecute(() =>
             {
-                command.Parameters.Add("@tagId", SqlDbType.Int).Value = tagId;
-                command.Parameters.Add("@objectId", SqlDbType.Int).Value = (object)objectId ?? DBNull.Value;
-                connection.Open();
-                command.ExecuteNonQuery();
-            }
+                const string sql = "UPDATE dbo.Tags SET ObjectId = @objectId WHERE Id = @tagId";
+
+                using (var connection = DatabaseConnection.CreateConnection())
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    command.Parameters.Add("@tagId", SqlDbType.Int).Value = tagId;
+                    command.Parameters.Add("@objectId", SqlDbType.Int).Value = (object)objectId ?? DBNull.Value;
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            });
         }
 
         public bool TestConnection(out string errorMessage)
@@ -558,6 +581,35 @@ WHERE Id = @id";
             }
 
             return result;
+        }
+
+        private T TryQuery<T>(Func<T> query, T emptyResult)
+        {
+            try
+            {
+                LastError = null;
+                return query();
+            }
+            catch (Exception ex)
+            {
+                LastError = ex.Message;
+                return emptyResult;
+            }
+        }
+
+        private bool TryExecute(Action action)
+        {
+            try
+            {
+                LastError = null;
+                action();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LastError = ex.Message;
+                return false;
+            }
         }
     }
 }

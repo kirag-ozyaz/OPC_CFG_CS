@@ -20,6 +20,8 @@ namespace OPC_CFGCS.UI.Controls
 
         public event EventHandler CurrentObjectChanged;
 
+        public string LastLoadError => _repository.LastError;
+
         public SchemaObjectPanel(SchemaObjectType objectType)
         {
             _objectType = objectType;

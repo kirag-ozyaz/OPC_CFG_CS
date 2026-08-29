@@ -54,6 +54,8 @@ namespace OPC_CFGCS.UI.Controls
             LoadTags();
         }
 
+        public string LastLoadError => _repository.LastError;
+
         public Tag CurrentTag
         {
             get
@@ -82,7 +84,12 @@ namespace OPC_CFGCS.UI.Controls
             }
 
             tag.ObjectId = objectId;
-            _repository.UpdateTagObjectId(tag.Id, objectId);
+            if (!_repository.UpdateTagObjectId(tag.Id, objectId))
+            {
+                ShowDataError();
+                return;
+            }
+
             RefreshTagsPreserveSelection(tag.Id);
             TagChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -96,7 +103,12 @@ namespace OPC_CFGCS.UI.Controls
             }
 
             tag.ObjectId = null;
-            _repository.UpdateTagObjectId(tag.Id, null);
+            if (!_repository.UpdateTagObjectId(tag.Id, null))
+            {
+                ShowDataError();
+                return;
+            }
+
             RefreshTagsPreserveSelection(tag.Id);
             TagChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -431,6 +443,15 @@ namespace OPC_CFGCS.UI.Controls
         {
             int parsed;
             return int.TryParse(value, out parsed) ? parsed : (int?)null;
+        }
+
+        private void ShowDataError()
+        {
+            MessageBox.Show(
+                _repository.LastError ?? "Ошибка доступа к базе данных.",
+                "OPC_CFGCS",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
         }
     }
 }

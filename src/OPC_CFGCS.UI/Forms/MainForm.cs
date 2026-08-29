@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -108,12 +109,39 @@ namespace OPC_CFGCS.UI.Forms
             lblConnectionStatus.ForeColor = Color.DarkGreen;
             mainWorkPanel.Enabled = true;
 
+            var loadErrors = new List<string>();
+
             psPanel.Reload();
+            AppendLoadError(loadErrors, "ПС", psPanel.LastLoadError);
+
             busPanel.Reload();
+            AppendLoadError(loadErrors, "Шина", busPanel.LastLoadError);
+
             switchPanel.Reload();
+            AppendLoadError(loadErrors, "Выключатель", switchPanel.LastLoadError);
+
             tagsPanel.ReloadData();
+            AppendLoadError(loadErrors, "Теги", tagsPanel.LastLoadError);
+
             bindPanel.ClearBindings();
             UpdateBindings();
+
+            if (loadErrors.Count > 0)
+            {
+                MessageBox.Show(
+                    "Подключение установлено, но часть данных не загружена:\r\n\r\n" + string.Join("\r\n", loadErrors),
+                    "OPC_CFGCS",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+        }
+
+        private static void AppendLoadError(ICollection<string> errors, string section, string error)
+        {
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                errors.Add(section + ": " + error);
+            }
         }
 
         private void OnSchemaTabChanged(object sender, EventArgs e)
