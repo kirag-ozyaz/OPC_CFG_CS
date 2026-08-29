@@ -62,7 +62,7 @@ namespace OPC_CFGCS.UI.Forms
         {
             try
             {
-                var iconPath = Path.Combine(Application.StartupPath, "Assets", "OPC_CFGCS.ico");
+                var iconPath = Path.Combine(Application.StartupPath, "Assets", "ReferenceData.ico");
                 if (File.Exists(iconPath))
                 {
                     Icon = new Icon(iconPath);
