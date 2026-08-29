@@ -29,6 +29,7 @@ namespace OPC_CFGCS.UI.Forms
             bindButtonPanel.Resize += (s, e) => CenterBindButton();
             CenterBindButton();
             txtConnectionString.Text = DatabaseConnection.ConnectionString;
+            txtGesConnectionString.Text = DatabaseConnection.GesConnectionString;
             mainWorkPanel.Enabled = false;
             InitializeMenu();
         }
@@ -89,16 +90,29 @@ namespace OPC_CFGCS.UI.Forms
 
         private void OnConnectClick(object sender, EventArgs e)
         {
-            var connectionString = txtConnectionString.Text.Trim();
-            DatabaseConnection.ConnectionString = connectionString;
+            DatabaseConnection.ConnectionString = txtConnectionString.Text.Trim();
+            DatabaseConnection.GesConnectionString = txtGesConnectionString.Text.Trim();
 
             if (!DatabaseConnection.TestConnection(out var error))
             {
-                lblConnectionStatus.Text = "Ошибка подключения";
+                lblConnectionStatus.Text = "Ошибка OPC_Config";
                 lblConnectionStatus.ForeColor = Color.DarkRed;
                 mainWorkPanel.Enabled = false;
                 MessageBox.Show(
-                    "Не удалось подключиться к SQL Server.\r\n\r\n" + error,
+                    "Не удалось подключиться к базе OPC_Config.\r\n\r\n" + error,
+                    "OPC_CFGCS",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+
+            if (!DatabaseConnection.TestGesConnection(out var gesError))
+            {
+                lblConnectionStatus.Text = "Ошибка GES";
+                lblConnectionStatus.ForeColor = Color.DarkRed;
+                mainWorkPanel.Enabled = false;
+                MessageBox.Show(
+                    "Не удалось подключиться к базе GES.\r\n\r\n" + gesError,
                     "OPC_CFGCS",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);

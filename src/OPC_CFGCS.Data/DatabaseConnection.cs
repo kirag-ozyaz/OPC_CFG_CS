@@ -7,6 +7,7 @@ namespace OPC_CFGCS.Data
     public static class DatabaseConnection
     {
         private static string _connectionString;
+        private static string _gesConnectionString;
 
         public static string ConnectionString
         {
@@ -26,14 +27,42 @@ namespace OPC_CFGCS.Data
             }
         }
 
+        public static string GesConnectionString
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(_gesConnectionString))
+                {
+                    return _gesConnectionString;
+                }
+
+                var configValue = ConfigurationManager.ConnectionStrings["Ges"];
+                return configValue == null ? string.Empty : configValue.ConnectionString;
+            }
+            set
+            {
+                _gesConnectionString = value;
+            }
+        }
+
         public static SqlConnection CreateConnection()
         {
             return new SqlConnection(ConnectionString);
         }
 
+        public static SqlConnection CreateGesConnection()
+        {
+            return new SqlConnection(GesConnectionString);
+        }
+
         public static bool TestConnection(out string errorMessage)
         {
             return TestConnection(ConnectionString, out errorMessage);
+        }
+
+        public static bool TestGesConnection(out string errorMessage)
+        {
+            return TestConnection(GesConnectionString, out errorMessage);
         }
 
         public static bool TestConnection(string connectionString, out string errorMessage)

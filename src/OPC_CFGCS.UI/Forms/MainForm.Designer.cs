@@ -12,6 +12,8 @@ namespace OPC_CFGCS.UI.Forms
         private TableLayoutPanel connectionLayout;
         private Label lblConnectionString;
         private TextBox txtConnectionString;
+        private Label lblGesConnectionString;
+        private TextBox txtGesConnectionString;
         private Button btnConnect;
         private Label lblConnectionStatus;
         private Panel mainWorkPanel;
@@ -46,6 +48,8 @@ namespace OPC_CFGCS.UI.Forms
             this.connectionLayout = new System.Windows.Forms.TableLayoutPanel();
             this.lblConnectionString = new System.Windows.Forms.Label();
             this.txtConnectionString = new System.Windows.Forms.TextBox();
+            this.lblGesConnectionString = new System.Windows.Forms.Label();
+            this.txtGesConnectionString = new System.Windows.Forms.TextBox();
             this.btnConnect = new System.Windows.Forms.Button();
             this.lblConnectionStatus = new System.Windows.Forms.Label();
             this.mainWorkPanel = new System.Windows.Forms.Panel();
@@ -79,7 +83,7 @@ namespace OPC_CFGCS.UI.Forms
             this.connectionPanel.Dock = System.Windows.Forms.DockStyle.Top;
             this.connectionPanel.Location = new System.Drawing.Point(0, 0);
             this.connectionPanel.Name = "connectionPanel";
-            this.connectionPanel.Size = new System.Drawing.Size(1064, 44);
+            this.connectionPanel.Size = new System.Drawing.Size(1064, 72);
             this.connectionPanel.TabIndex = 1;
             // 
             // connectionLayout
@@ -91,15 +95,20 @@ namespace OPC_CFGCS.UI.Forms
             this.connectionLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.connectionLayout.Controls.Add(this.lblConnectionString, 0, 0);
             this.connectionLayout.Controls.Add(this.txtConnectionString, 1, 0);
+            this.connectionLayout.Controls.Add(this.lblGesConnectionString, 0, 1);
+            this.connectionLayout.Controls.Add(this.txtGesConnectionString, 1, 1);
             this.connectionLayout.Controls.Add(this.btnConnect, 2, 0);
             this.connectionLayout.Controls.Add(this.lblConnectionStatus, 3, 0);
             this.connectionLayout.Dock = System.Windows.Forms.DockStyle.Fill;
             this.connectionLayout.Location = new System.Drawing.Point(0, 0);
             this.connectionLayout.Name = "connectionLayout";
             this.connectionLayout.Padding = new System.Windows.Forms.Padding(8, 8, 8, 4);
-            this.connectionLayout.RowCount = 1;
-            this.connectionLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.connectionLayout.Size = new System.Drawing.Size(1064, 44);
+            this.connectionLayout.RowCount = 2;
+            this.connectionLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.connectionLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.connectionLayout.SetRowSpan(this.btnConnect, 2);
+            this.connectionLayout.SetRowSpan(this.lblConnectionStatus, 2);
+            this.connectionLayout.Size = new System.Drawing.Size(1064, 72);
             this.connectionLayout.TabIndex = 0;
             // 
             // lblConnectionString
@@ -111,7 +120,7 @@ namespace OPC_CFGCS.UI.Forms
             this.lblConnectionString.Name = "lblConnectionString";
             this.lblConnectionString.Size = new System.Drawing.Size(116, 13);
             this.lblConnectionString.TabIndex = 0;
-            this.lblConnectionString.Text = "Строка подключения:";
+            this.lblConnectionString.Text = "OPC_Config:";
             // 
             // txtConnectionString
             // 
@@ -121,6 +130,26 @@ namespace OPC_CFGCS.UI.Forms
             this.txtConnectionString.Name = "txtConnectionString";
             this.txtConnectionString.Size = new System.Drawing.Size(713, 20);
             this.txtConnectionString.TabIndex = 1;
+            // 
+            // lblGesConnectionString
+            // 
+            this.lblGesConnectionString.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.lblGesConnectionString.AutoSize = true;
+            this.lblGesConnectionString.Location = new System.Drawing.Point(11, 48);
+            this.lblGesConnectionString.Margin = new System.Windows.Forms.Padding(3, 5, 8, 0);
+            this.lblGesConnectionString.Name = "lblGesConnectionString";
+            this.lblGesConnectionString.Size = new System.Drawing.Size(31, 13);
+            this.lblGesConnectionString.TabIndex = 4;
+            this.lblGesConnectionString.Text = "GES:";
+            // 
+            // txtGesConnectionString
+            // 
+            this.txtGesConnectionString.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtGesConnectionString.Location = new System.Drawing.Point(138, 39);
+            this.txtGesConnectionString.Margin = new System.Windows.Forms.Padding(3, 3, 8, 3);
+            this.txtGesConnectionString.Name = "txtGesConnectionString";
+            this.txtGesConnectionString.Size = new System.Drawing.Size(713, 20);
+            this.txtGesConnectionString.TabIndex = 5;
             // 
             // btnConnect
             // 
