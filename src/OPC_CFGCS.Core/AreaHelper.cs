@@ -12,7 +12,7 @@ namespace OPC_CFGCS.Core
             }
 
             var ps = area.Length >= 2 ? area.Substring(0, 2) : area;
-            var slashIndex = area.IndexOf('\\', StringComparison.Ordinal);
+            var slashIndex = area.IndexOf('\\');
             string psNum;
 
             if (slashIndex < 0)
