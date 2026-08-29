@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using OPC_CFGCS.Core;
 using OPC_CFGCS.Data;
@@ -14,8 +15,25 @@ namespace OPC_CFGCS.UI.Forms
         public MainForm()
         {
             InitializeComponent();
+            LoadApplicationIcons();
             txtConnectionString.Text = DatabaseConnection.ConnectionString;
             rootSplitContainer.Enabled = false;
+        }
+
+        private void LoadApplicationIcons()
+        {
+            try
+            {
+                var appIconPath = Path.Combine(Application.StartupPath, "Assets", "OPC_CFGCS.ico");
+                if (File.Exists(appIconPath))
+                {
+                    Icon = new Icon(appIconPath);
+                }
+            }
+            catch
+            {
+                // Оставляем иконку по умолчанию, если файл недоступен.
+            }
         }
 
         private void OnConnectClick(object sender, EventArgs e)

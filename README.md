@@ -61,3 +61,8 @@ msbuild OPC_CFGCS.sln /p:Configuration=Release
 - `viewOpc_Ps`
 - `viewOpc_Ps_Cell_Bus`
 - `viewOpc_Ps_Cell_Switch`
+
+## Иконки
+
+- `src/OPC_CFGCS.UI/Assets/OPC_CFGCS.ico` — иконка приложения (exe, заголовок окна)
+- `src/OPC_CFGCS.UI/Assets/Bind.ico` — иконка привязки тегов (дополнительный ресурс)
