@@ -14,7 +14,16 @@ namespace OPC_CFGCS.UI.Forms
 
         public MainForm()
         {
+            psPanel = new SchemaObjectPanel(SchemaObjectType.PowerStation);
+            busPanel = new SchemaObjectPanel(SchemaObjectType.CellBus);
+            switchPanel = new SchemaObjectPanel(SchemaObjectType.CellSwitch);
+
             InitializeComponent();
+
+            psPanel.CurrentObjectChanged += OnSchemaObjectChanged;
+            busPanel.CurrentObjectChanged += OnSchemaObjectChanged;
+            switchPanel.CurrentObjectChanged += OnSchemaObjectChanged;
+
             LoadApplicationIcons();
             bindButtonPanel.Resize += (s, e) => CenterBindButton();
             CenterBindButton();
