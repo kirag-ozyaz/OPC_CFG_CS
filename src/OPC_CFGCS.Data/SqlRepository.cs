@@ -6,8 +6,10 @@ using OPC_CFGCS.Data.Models;
 
 namespace OPC_CFGCS.Data
 {
+    /// <summary>Доступ к SQL Server: теги, объекты схемы, справочники, связи ObjectId.</summary>
     public sealed class SqlRepository
     {
+        /// <summary>Текст последней ошибки SQL или загрузки.</summary>
         public string LastError { get; private set; }
 
         public IList<Tag> GetTags()

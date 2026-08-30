@@ -9,14 +9,38 @@
 - SQL Server 2005+ с базами `OPC_Config` и `GES` (представления на `OPC_Config` ссылаются на `GES.dbo.*`)
 - Windows Authentication (как в исходном ADP)
 
+## Интеграция в стороннее приложение
+
+**[docs/INTEGRATION.md](docs/INTEGRATION.md)** — сборки, App.config, API, примеры.
+
+```csharp
+var session = OpcCfgcsHost.CreateSession(new OpcCfgcsSessionOptions { AutoConnect = true });
+var workspace = session.CreateWorkspace();
+workspace.Dock = DockStyle.Fill;
+configuratorPanel.Controls.Add(workspace);
+session.ShowTagsEditor(this);
+session.ShowReferenceData(this);
+```
+
+| Сборка | Назначение |
+|--------|------------|
+| `OPC_CFGCS.Integration.dll` | `OpcCfgcsHost`, `OpcCfgcsSession` |
+| `OPC_CFGCS.UI.dll` | `OpcCfgcsWorkspace`, диалоги |
+| `OPC_CFGCS.Core.dll` | `OpcCfgcsSessionOptions`, `OpcCfgcsConnectResult` |
+| `OPC_CFGCS.Data.dll` | SQL Server |
+| `OPC_CFGCS.exe` | Автономный запуск |
+
 ## Структура решения
 
 ```
 OPC_CFGCS.sln
-├── src/OPC_CFGCS.UI/       WinForms-приложение
-├── src/OPC_CFGCS.Data/     ADO.NET, SqlRepository
-└── src/OPC_CFGCS.Core/     Бизнес-логика (AreaHelper, AppState, BindingService)
+├── src/OPC_CFGCS.Integration/  API для сторонних приложений
+├── src/OPC_CFGCS.UI/             WinForms-приложение и контролы
+├── src/OPC_CFGCS.Data/           ADO.NET, SqlRepository
+└── src/OPC_CFGCS.Core/           Бизнес-логика (AreaHelper, AppState, BindingService)
 ```
+
+Архитектура классов и потоки данных: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
 ## Подключение к БД
 

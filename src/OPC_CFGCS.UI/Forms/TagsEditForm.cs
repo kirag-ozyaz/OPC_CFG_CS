@@ -11,6 +11,7 @@ namespace OPC_CFGCS.UI.Forms
     {
         private readonly TagsPanel _tagsPanel = new TagsPanel();
 
+        /// <summary>Форма с редактируемым <see cref="TagsPanel"/>.</summary>
         public TagsEditForm()
         {
             Text = "Заполнение тегов";
@@ -25,6 +26,7 @@ namespace OPC_CFGCS.UI.Forms
             Load += OnFormLoad;
         }
 
+        /// <summary>Загружает теги при открытии формы.</summary>
         private void OnFormLoad(object sender, EventArgs e)
         {
             _tagsPanel.ReloadData();

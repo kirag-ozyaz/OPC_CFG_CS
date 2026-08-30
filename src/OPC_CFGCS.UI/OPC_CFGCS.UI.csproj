@@ -44,6 +44,12 @@
     <Compile Include="Controls\BindPanel.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Include="Controls\OpcCfgcsWorkspace.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Controls\OpcCfgcsWorkspace.Designer.cs">
+      <DependentUpon>OpcCfgcsWorkspace.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\SchemaObjectPanel.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -51,6 +57,8 @@
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="GridColors.cs" />
+    <Compile Include="OpcCfgcsConnectionResolver.cs" />
+    <Compile Include="OpcCfgcsConnectionService.cs" />
     <Compile Include="RecentConnectionsStore.cs" />
     <Compile Include="Forms\TagsEditForm.cs">
       <SubType>Form</SubType>

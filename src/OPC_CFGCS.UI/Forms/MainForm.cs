@@ -1,100 +1,44 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
-using OPC_CFGCS.Core;
 using OPC_CFGCS.Data;
 using OPC_CFGCS.UI.Controls;
 
 namespace OPC_CFGCS.UI.Forms
 {
     /// <summary>
-    /// Главная форма приложения: подключение к OPC_Config и GES, связывание OPC-тегов с объектами схемы.
+    /// Главная форма standalone: подключение к БД и рабочая область конфигуратора.
     /// </summary>
     public sealed partial class MainForm : Form
     {
-        private SchemaObjectType _currentSchemaType = SchemaObjectType.PowerStation;
         private IList<RecentConnectionEntry> _recentConnections = new List<RecentConnectionEntry>();
-        private SchemaObjectPanel psPanel;
-        private SchemaObjectPanel busPanel;
-        private SchemaObjectPanel switchPanel;
-        private TagsPanel tagsPanel;
+        private OpcCfgcsWorkspace _workspace;
 
+        /// <summary>Инициализирует форму, workspace и меню.</summary>
         public MainForm()
         {
             InitializeComponent();
-            InitializeCustomControls();
-
+            InitializeWorkspace();
             LoadApplicationIcons();
-            bindButtonPanel.Resize += (s, e) => CenterBindButton();
-            CenterBindButton();
             LoadRecentConnections();
             cmbConnectionString.SelectedIndexChanged += OnOpcConnectionHistorySelected;
-            mainWorkPanel.Enabled = false;
             InitializeMenu();
         }
 
-        /// <summary>
-        /// Создаёт кастомные панели во время выполнения и заменяет подсказки из дизайнера.
-        /// В режиме дизайнера не выполняется — на форме остаются placeholder-Label.
-        /// </summary>
-        private void InitializeCustomControls()
+        /// <summary>Создаёт <see cref="OpcCfgcsWorkspace"/> и размещает в <see cref="workspaceHost"/>.</summary>
+        private void InitializeWorkspace()
         {
-            if (LicenseManager.UsageMode == LicenseUsageMode.Designtime)
-            {
-                return;
-            }
-
-            psPanel = new SchemaObjectPanel(SchemaObjectType.PowerStation);
-            psPanel.Name = "psPanel";
-            ReplacePlaceholder(tabPs, lblPsPlaceholder, psPanel);
-            psPanel.CurrentObjectChanged += OnSchemaObjectChanged;
-
-            busPanel = new SchemaObjectPanel(SchemaObjectType.CellBus);
-            busPanel.Name = "busPanel";
-            ReplacePlaceholder(tabBus, lblBusPlaceholder, busPanel);
-            busPanel.CurrentObjectChanged += OnSchemaObjectChanged;
-
-            switchPanel = new SchemaObjectPanel(SchemaObjectType.CellSwitch);
-            switchPanel.Name = "switchPanel";
-            ReplacePlaceholder(tabSwitch, lblSwitchPlaceholder, switchPanel);
-            switchPanel.CurrentObjectChanged += OnSchemaObjectChanged;
-
-            tagsPanel = new TagsPanel(false);
-            tagsPanel.Name = "tagsPanel";
-            tagsPanel.TagChanged += OnTagChanged;
-            ReplacePlaceholderInTable(gridsLayout, lblTagsPlaceholder, tagsPanel, 2, 0);
+            _workspace = new OpcCfgcsWorkspace { Dock = DockStyle.Fill };
+            workspaceHost.Controls.Add(_workspace);
+            _workspace.SetConnected(false);
         }
 
-        /// <summary>Удаляет placeholder и добавляет реальный контрол в обычный контейнер.</summary>
-        private static void ReplacePlaceholder(Control parent, Label placeholder, Control replacement)
-        {
-            parent.Controls.Remove(placeholder);
-            placeholder.Dispose();
-            replacement.Dock = DockStyle.Fill;
-            parent.Controls.Add(replacement);
-        }
-
-        /// <summary>Удаляет placeholder и добавляет реальный контрол в ячейку TableLayoutPanel.</summary>
-        private static void ReplacePlaceholderInTable(
-            TableLayoutPanel table,
-            Label placeholder,
-            Control replacement,
-            int column,
-            int row)
-        {
-            table.Controls.Remove(placeholder);
-            placeholder.Dispose();
-            replacement.Dock = DockStyle.Fill;
-            table.Controls.Add(replacement, column, row);
-        }
-
+        /// <summary>Заполняет комбобоксы из истории или App.config.</summary>
         private void LoadRecentConnections()
         {
             _recentConnections = RecentConnectionsStore.Load();
-
             cmbConnectionString.Items.Clear();
             cmbGesConnectionString.Items.Clear();
 
@@ -123,6 +67,7 @@ namespace OPC_CFGCS.UI.Forms
             cmbGesConnectionString.Text = DatabaseConnection.GesConnectionString;
         }
 
+        /// <summary>При выборе OPC_Config из истории подставляет парную строку GES.</summary>
         private void OnOpcConnectionHistorySelected(object sender, EventArgs e)
         {
             if (cmbConnectionString.SelectedIndex < 0)
@@ -146,10 +91,10 @@ namespace OPC_CFGCS.UI.Forms
             }
         }
 
+        /// <summary>Меню «Данные» и «Настройки» (теги, справочники).</summary>
         private void InitializeMenu()
         {
             var menuStrip = new MenuStrip();
-
             var dataMenu = new ToolStripMenuItem("Данные");
             var tagsMenuItem = new ToolStripMenuItem("Заполнение тегов...");
             tagsMenuItem.Click += OnTagsEditClick;
@@ -165,9 +110,10 @@ namespace OPC_CFGCS.UI.Forms
             Controls.Add(menuStrip);
         }
 
+        /// <summary>Открывает <see cref="TagsEditForm"/> после проверки подключения.</summary>
         private void OnTagsEditClick(object sender, EventArgs e)
         {
-            if (!mainWorkPanel.Enabled)
+            if (!_workspace.EnabledForConnection)
             {
                 MessageBox.Show(
                     "Сначала подключитесь к базе данных.",
@@ -182,13 +128,13 @@ namespace OPC_CFGCS.UI.Forms
                 form.ShowDialog(this);
             }
 
-            tagsPanel.ReloadData();
-            RefreshSchemaBindingHighlights();
+            _workspace.ReloadTagsAndHighlights();
         }
 
+        /// <summary>Открывает <see cref="ReferenceDataForm"/> после проверки подключения.</summary>
         private void OnReferenceDataClick(object sender, EventArgs e)
         {
-            if (!mainWorkPanel.Enabled)
+            if (!_workspace.EnabledForConnection)
             {
                 MessageBox.Show(
                     "Сначала подключитесь к базе данных.",
@@ -203,15 +149,10 @@ namespace OPC_CFGCS.UI.Forms
                 form.ShowDialog(this);
             }
 
-            tagsPanel.ReloadData();
+            _workspace.ReloadTagsAndHighlights();
         }
 
-        private void CenterBindButton()
-        {
-            btnBind.Left = Math.Max(0, (bindButtonPanel.ClientSize.Width - btnBind.Width) / 2);
-            btnBind.Top = Math.Max(0, (bindButtonPanel.ClientSize.Height - btnBind.Height) / 2);
-        }
-
+        /// <summary>Загружает иконку из Assets/OPC_CFGCS.ico.</summary>
         private void LoadApplicationIcons()
         {
             try
@@ -228,170 +169,27 @@ namespace OPC_CFGCS.UI.Forms
             }
         }
 
+        /// <summary>Подключается к OPC_Config и GES, обновляет статус и workspace.</summary>
         private void OnConnectClick(object sender, EventArgs e)
         {
-            var opcConnectionString = cmbConnectionString.Text.Trim();
-            var gesConnectionString = cmbGesConnectionString.Text.Trim();
-            DatabaseConnection.ConnectionString = opcConnectionString;
-            DatabaseConnection.GesConnectionString = gesConnectionString;
+            var result = OpcCfgcsConnectionService.Connect(
+                _workspace,
+                cmbConnectionString.Text,
+                cmbGesConnectionString.Text,
+                this,
+                showDialogs: true,
+                saveRecent: true);
 
-            if (!DatabaseConnection.TestConnection(out var error))
+            lblConnectionStatus.Text = result.StatusText;
+            lblConnectionStatus.ForeColor = result.Success ? Color.DarkGreen : Color.DarkRed;
+
+            if (result.Success)
             {
-                lblConnectionStatus.Text = "Ошибка OPC_Config";
-                lblConnectionStatus.ForeColor = Color.DarkRed;
-                mainWorkPanel.Enabled = false;
-                MessageBox.Show(
-                    "Не удалось подключиться к базе OPC_Config.\r\n\r\n" + error,
-                    "OPC_CFGCS",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-                return;
-            }
-
-            if (!DatabaseConnection.TestGesConnection(out var gesError))
-            {
-                lblConnectionStatus.Text = "Ошибка GES";
-                lblConnectionStatus.ForeColor = Color.DarkRed;
-                mainWorkPanel.Enabled = false;
-                MessageBox.Show(
-                    "Не удалось подключиться к базе GES.\r\n\r\n" + gesError,
-                    "OPC_CFGCS",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-                return;
-            }
-
-            lblConnectionStatus.Text = "Подключено";
-            lblConnectionStatus.ForeColor = Color.DarkGreen;
-            mainWorkPanel.Enabled = true;
-
-            RecentConnectionsStore.SaveRecent(opcConnectionString, gesConnectionString);
-            LoadRecentConnections();
-
-            var loadErrors = new List<string>();
-
-            psPanel.Reload();
-            AppendLoadError(loadErrors, "ПС", psPanel.LastLoadError);
-
-            busPanel.Reload();
-            AppendLoadError(loadErrors, "Шина", busPanel.LastLoadError);
-
-            switchPanel.Reload();
-            AppendLoadError(loadErrors, "Выключатель", switchPanel.LastLoadError);
-
-            tagsPanel.ReloadData();
-            AppendLoadError(loadErrors, "Теги", tagsPanel.LastLoadError);
-
-            bindPanel.ClearBindings();
-            UpdateBindings();
-
-            if (loadErrors.Count > 0)
-            {
-                MessageBox.Show(
-                    "Подключение установлено, но часть данных не загружена:\r\n\r\n" + string.Join("\r\n", loadErrors),
-                    "OPC_CFGCS",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                LoadRecentConnections();
             }
         }
 
-        private static void AppendLoadError(ICollection<string> errors, string section, string error)
-        {
-            if (!string.IsNullOrWhiteSpace(error))
-            {
-                errors.Add(section + ": " + error);
-            }
-        }
-
-        private void OnSchemaTabChanged(object sender, EventArgs e)
-        {
-            _currentSchemaType = (SchemaObjectType)schemaTabs.SelectedIndex;
-            tagsPanel.SetSchemaObjectType(_currentSchemaType);
-            OnSchemaObjectChanged(sender, EventArgs.Empty);
-            tagsPanel.RefreshTagState();
-        }
-
-        private void OnSchemaObjectChanged(object sender, EventArgs e)
-        {
-            var current = GetCurrentSchemaPanel().CurrentObject;
-            if (current != null)
-            {
-                AppState.CurrentArea = current.ParentObj;
-                tagsPanel.SelectFirstBoundTag(current.Id);
-            }
-
-            UpdateBindings();
-            UpdateBindButtonCaption();
-        }
-
-        private void OnTagChanged(object sender, EventArgs e)
-        {
-            UpdateBindButtonCaption();
-        }
-
-        private void OnBindClick(object sender, EventArgs e)
-        {
-            if (tagsPanel.HasObjectBinding)
-            {
-                tagsPanel.UnbindObject();
-            }
-            else
-            {
-                var current = GetCurrentSchemaPanel().CurrentObject;
-                if (current != null)
-                {
-                    tagsPanel.BindToObject(current.Id);
-                }
-            }
-
-            UpdateBindings();
-            UpdateBindButtonCaption();
-            RefreshSchemaBindingHighlights();
-        }
-
-        private void RefreshSchemaBindingHighlights()
-        {
-            psPanel.RefreshBindingHighlights();
-            busPanel.RefreshBindingHighlights();
-            switchPanel.RefreshBindingHighlights();
-        }
-
-        private void UpdateBindings()
-        {
-            if (!mainWorkPanel.Enabled)
-            {
-                bindPanel.ClearBindings();
-                return;
-            }
-
-            var current = GetCurrentSchemaPanel().CurrentObject;
-            if (current == null)
-            {
-                bindPanel.ClearBindings();
-                return;
-            }
-
-            bindPanel.ShowBindings(current.Id);
-        }
-
-        private void UpdateBindButtonCaption()
-        {
-            btnBind.Text = tagsPanel.HasObjectBinding ? "<X>" : "<=>";
-        }
-
-        private SchemaObjectPanel GetCurrentSchemaPanel()
-        {
-            switch (_currentSchemaType)
-            {
-                case SchemaObjectType.CellBus:
-                    return busPanel;
-                case SchemaObjectType.CellSwitch:
-                    return switchPanel;
-                default:
-                    return psPanel;
-            }
-        }
-
+        /// <summary>Обработчик закрытия формы (в ADP — Application.Quit).</summary>
         private void OnFormClosing(object sender, FormClosingEventArgs e)
         {
             // Form_Close в ADP вызывал Application.Quit acQuitSaveNone

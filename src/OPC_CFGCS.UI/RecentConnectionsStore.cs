@@ -32,6 +32,7 @@ namespace OPC_CFGCS.UI
             }
         }
 
+        /// <summary>Читает историю из XML; при ошибке — пустой список.</summary>
         public static IList<RecentConnectionEntry> Load()
         {
             var path = SettingsFilePath;
@@ -76,6 +77,7 @@ namespace OPC_CFGCS.UI
             }
         }
 
+        /// <summary>Добавляет пару строк в начало истории (до 12 записей).</summary>
         public static void SaveRecent(string opcConfig, string ges)
         {
             opcConfig = opcConfig?.Trim() ?? string.Empty;
