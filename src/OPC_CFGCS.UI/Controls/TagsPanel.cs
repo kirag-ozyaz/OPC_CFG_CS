@@ -149,12 +149,12 @@ namespace OPC_CFGCS.UI.Controls
                 SplitterDistance = 220
             };
 
-            _grid.Dock = DockStyle.Fill;
             _grid.ReadOnly = true;
             _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             _grid.MultiSelect = false;
             _grid.AllowUserToAddRows = false;
             _grid.AutoGenerateColumns = false;
+            _grid.Dock = DockStyle.Fill;
             var areaColumn = new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "Area",
@@ -169,51 +169,7 @@ namespace OPC_CFGCS.UI.Controls
             _grid.KeyDown += OnGridKeyDown;
             _grid.CellFormatting += OnGridCellFormatting;
 
-            var gridHost = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = _editable ? 1 : 2,
-                Padding = new Padding(0)
-            };
-            gridHost.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-
-            if (!_editable)
-            {
-                gridHost.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-                gridHost.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-
-                var searchPanel = new TableLayoutPanel
-                {
-                    Dock = DockStyle.Fill,
-                    AutoSize = true,
-                    ColumnCount = 2,
-                    Padding = new Padding(4, 4, 4, 2)
-                };
-                searchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
-                searchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-                searchPanel.Controls.Add(new Label
-                {
-                    Text = "Подстанция:",
-                    AutoSize = true,
-                    Anchor = AnchorStyles.Left,
-                    Margin = new Padding(3, 6, 8, 3)
-                }, 0, 0);
-
-                _txtAreaSearch = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(3, 3, 3, 3) };
-                _txtAreaSearch.TextChanged += OnAreaSearchChanged;
-                searchPanel.Controls.Add(_txtAreaSearch, 1, 0);
-
-                gridHost.Controls.Add(searchPanel, 0, 0);
-                gridHost.Controls.Add(_grid, 0, 1);
-            }
-            else
-            {
-                gridHost.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-                gridHost.Controls.Add(_grid, 0, 0);
-            }
-
-            split.Panel1.Controls.Add(gridHost);
+            split.Panel1.Controls.Add(BuildTagsListArea());
 
             _editorPanel.Dock = DockStyle.Fill;
             _editorPanel.Padding = new Padding(8);
@@ -258,10 +214,69 @@ namespace OPC_CFGCS.UI.Controls
 
             if (!_editable)
             {
-                split.SplitterDistance = 280;
+                split.SplitterDistance = 300;
             }
 
             Controls.Add(split);
+        }
+
+        private Control BuildTagsListArea()
+        {
+            if (_editable)
+            {
+                return _grid;
+            }
+
+            const int searchBarHeight = 30;
+
+            var listSplit = new SplitContainer
+            {
+                Dock = DockStyle.Fill,
+                Orientation = Orientation.Horizontal,
+                IsSplitterFixed = true,
+                FixedPanel = FixedPanel.Panel1,
+                SplitterWidth = 1,
+                Panel1MinSize = searchBarHeight,
+                SplitterDistance = searchBarHeight
+            };
+
+            var searchLayout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 1,
+                Margin = Padding.Empty,
+                Padding = new Padding(4, 4, 4, 2)
+            };
+            searchLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80F));
+            searchLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            searchLayout.Controls.Add(new Label
+            {
+                Text = "Подстанция:",
+                Anchor = AnchorStyles.Left,
+                AutoSize = true,
+                Margin = new Padding(0, 4, 4, 0)
+            }, 0, 0);
+
+            _txtAreaSearch = new TextBox
+            {
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 2, 0, 0)
+            };
+            _txtAreaSearch.TextChanged += OnAreaSearchChanged;
+            searchLayout.Controls.Add(_txtAreaSearch, 1, 0);
+
+            listSplit.Panel1.Controls.Add(searchLayout);
+            listSplit.Panel2.Controls.Add(_grid);
+            listSplit.Resize += (sender, args) =>
+            {
+                if (listSplit.Panel1.Height != searchBarHeight)
+                {
+                    listSplit.SplitterDistance = searchBarHeight;
+                }
+            };
+
+            return listSplit;
         }
 
         private static void AddEditorRow(TableLayoutPanel table, int row, string leftLabel, Control leftControl, string rightLabel, Control rightControl)
