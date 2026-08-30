@@ -192,8 +192,8 @@ namespace OPC_CFGCS.UI.Controls
                 _txtAreaSearch.TextChanged += OnAreaSearchChanged;
                 searchPanel.Controls.Add(_txtAreaSearch, 1, 0);
 
-                gridHost.Controls.Add(_grid);
                 gridHost.Controls.Add(searchPanel);
+                gridHost.Controls.Add(_grid);
             }
             else
             {
