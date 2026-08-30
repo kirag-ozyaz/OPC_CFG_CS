@@ -140,6 +140,27 @@ namespace OPC_CFGCS.UI.Controls
             RefreshCurrentTagState();
         }
 
+        public void SelectFirstBoundTag(int objectId)
+        {
+            var tag = _allTags.FirstOrDefault(item => item.ObjectId.HasValue && item.ObjectId.Value == objectId);
+            if (tag == null)
+            {
+                return;
+            }
+
+            if (_tags.All(item => item.Id != tag.Id))
+            {
+                if (_txtAreaSearch != null)
+                {
+                    _txtAreaSearch.Text = string.Empty;
+                }
+
+                ApplyAreaFilter();
+            }
+
+            SelectTagRow(tag.Id);
+        }
+
         private void BuildLayout()
         {
             var split = new SplitContainer
@@ -336,7 +357,11 @@ namespace OPC_CFGCS.UI.Controls
             _allTags = _repository.GetTags();
             ApplyAreaFilter();
             _tag2Groups = new BindingList<Tag2Group>(_repository.GetTag2Groups());
+            SelectTagRow(tagId);
+        }
 
+        private void SelectTagRow(int tagId)
+        {
             foreach (DataGridViewRow row in _grid.Rows)
             {
                 var tag = row.DataBoundItem as Tag;
@@ -344,7 +369,12 @@ namespace OPC_CFGCS.UI.Controls
                 {
                     row.Selected = true;
                     _grid.CurrentCell = row.Cells[0];
-                    break;
+                    if (row.Index >= 0)
+                    {
+                        _grid.FirstDisplayedScrollingRowIndex = row.Index;
+                    }
+
+                    return;
                 }
             }
         }

@@ -261,6 +261,7 @@ namespace OPC_CFGCS.UI.Forms
             if (current != null)
             {
                 AppState.CurrentArea = current.ParentObj;
+                tagsPanel.SelectFirstBoundTag(current.Id);
             }
 
             UpdateBindings();
