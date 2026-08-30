@@ -8,7 +8,7 @@ namespace OPC_CFGCS.UI.Forms
 {
     public sealed class TagsEditForm : Form
     {
-        private readonly TagsPanel _tagsPanel = new TagsPanel(showEditorPanel: true);
+        private readonly TagsPanel _tagsPanel = new TagsPanel();
 
         public TagsEditForm()
         {

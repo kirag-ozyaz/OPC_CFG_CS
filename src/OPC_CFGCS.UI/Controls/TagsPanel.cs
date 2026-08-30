@@ -35,21 +35,25 @@ namespace OPC_CFGCS.UI.Controls
         private bool _groupChanged;
         private SchemaObjectType _schemaObjectType = SchemaObjectType.PowerStation;
 
-        private readonly bool _showEditorPanel;
+        private readonly bool _editable;
 
         public event EventHandler TagChanged;
 
-        public TagsPanel(bool showEditorPanel = true)
+        public TagsPanel(bool editable = true)
         {
-            _showEditorPanel = showEditorPanel;
+            _editable = editable;
             Dock = DockStyle.Fill;
             BuildLayout();
             _tags = new BindingList<Tag>();
             _tag2Groups = new BindingList<Tag2Group>();
             _grid.DataSource = _tags;
-            if (_showEditorPanel)
+            if (_editable)
             {
                 SetEditMode(false);
+            }
+            else
+            {
+                SetViewOnlyMode();
             }
         }
 
@@ -158,28 +162,28 @@ namespace OPC_CFGCS.UI.Controls
 
             split.Panel1.Controls.Add(_grid);
 
-            if (_showEditorPanel)
+            _editorPanel.Dock = DockStyle.Fill;
+            _editorPanel.Padding = new Padding(8);
+            var table = new TableLayoutPanel
             {
-                _editorPanel.Dock = DockStyle.Fill;
-                _editorPanel.Padding = new Padding(8);
-                var table = new TableLayoutPanel
-                {
-                    Dock = DockStyle.Top,
-                    AutoSize = true,
-                    ColumnCount = 4,
-                    RowCount = 6
-                };
-                table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
-                table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-                table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
-                table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                ColumnCount = 4,
+                RowCount = 5
+            };
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
 
-                AddEditorRow(table, 0, "Сервер", _cmbServer, "Группа", _cmbGroup);
-                AddEditorRow(table, 1, "Параметр", _cmbParameter, "Area", _txtArea);
-                AddEditorRow(table, 2, "Source", _txtSource, "ItemName", _txtItemName);
-                AddEditorRow(table, 3, "Multiplier", _txtMultiplier, "Offset", _txtOffset);
-                AddEditorRow(table, 4, "BitMask", _txtBitMask, "DeadBand", _txtDeadBand);
+            AddEditorRow(table, 0, "Сервер", _cmbServer, "Группа", _cmbGroup);
+            AddEditorRow(table, 1, "Параметр", _cmbParameter, "Area", _txtArea);
+            AddEditorRow(table, 2, "Source", _txtSource, "ItemName", _txtItemName);
+            AddEditorRow(table, 3, "Multiplier", _txtMultiplier, "Offset", _txtOffset);
+            AddEditorRow(table, 4, "BitMask", _txtBitMask, "DeadBand", _txtDeadBand);
 
+            if (_editable)
+            {
                 var buttonsPanel = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true };
                 buttonsPanel.Controls.Add(_chkEdit);
                 buttonsPanel.Controls.Add(_chkNormalState);
@@ -192,13 +196,15 @@ namespace OPC_CFGCS.UI.Controls
                 _cmbGroup.DropDown += OnGroupDropDown;
 
                 _editorPanel.Controls.Add(buttonsPanel);
-                _editorPanel.Controls.Add(table);
-                split.Panel2.Controls.Add(_editorPanel);
             }
-            else
+
+            _editorPanel.Controls.Add(table);
+            split.Panel2.Controls.Add(_editorPanel);
+
+            if (!_editable)
             {
-                split.Panel2Collapsed = true;
                 _grid.AllowUserToAddRows = false;
+                split.SplitterDistance = 280;
             }
 
             Controls.Add(split);
@@ -262,20 +268,11 @@ namespace OPC_CFGCS.UI.Controls
             var tag = CurrentTag;
             if (tag == null)
             {
+                ClearDetailFields();
                 return;
             }
 
-            if (!_showEditorPanel)
-            {
-                if (!string.IsNullOrWhiteSpace(tag.Area))
-                {
-                    AppState.CurrentArea = AreaHelper.GetParentObj(tag.Area);
-                }
-
-                return;
-            }
-
-            if (_groupChanged && tag.Id > 0)
+            if (_editable && _groupChanged && tag.Id > 0)
             {
                 var groupId = GetSelectedGroupId();
                 if (groupId.HasValue)
@@ -287,6 +284,16 @@ namespace OPC_CFGCS.UI.Controls
                 _groupChanged = false;
             }
 
+            PopulateDetailFields(tag);
+
+            if (!string.IsNullOrWhiteSpace(tag.Area))
+            {
+                AppState.CurrentArea = AreaHelper.GetParentObj(tag.Area);
+            }
+        }
+
+        private void PopulateDetailFields(Tag tag)
+        {
             SelectComboValue(_cmbServer, tag.ServerId);
             SelectComboValue(_cmbParameter, tag.ParameterId);
             _txtArea.Text = tag.Area ?? string.Empty;
@@ -309,11 +316,21 @@ namespace OPC_CFGCS.UI.Controls
                 ReloadGroups(tag.ServerId);
                 _cmbGroup.SelectedIndex = -1;
             }
+        }
 
-            if (!string.IsNullOrWhiteSpace(tag.Area))
-            {
-                AppState.CurrentArea = AreaHelper.GetParentObj(tag.Area);
-            }
+        private void ClearDetailFields()
+        {
+            _cmbServer.SelectedIndex = -1;
+            _cmbGroup.SelectedIndex = -1;
+            _cmbParameter.SelectedIndex = -1;
+            _txtArea.Clear();
+            _txtSource.Clear();
+            _txtItemName.Clear();
+            _txtMultiplier.Clear();
+            _txtOffset.Clear();
+            _txtBitMask.Clear();
+            _txtDeadBand.Clear();
+            _chkNormalState.Checked = false;
         }
 
         private void OnUserAddedRow(object sender, DataGridViewRowEventArgs e)
@@ -467,6 +484,20 @@ namespace OPC_CFGCS.UI.Controls
             _txtDeadBand.ReadOnly = !enabled;
             _chkNormalState.Enabled = enabled;
             _btnSave.Enabled = enabled;
+        }
+
+        private void SetViewOnlyMode()
+        {
+            _cmbServer.Enabled = false;
+            _cmbGroup.Enabled = false;
+            _cmbParameter.Enabled = false;
+            _txtArea.ReadOnly = true;
+            _txtSource.ReadOnly = true;
+            _txtItemName.ReadOnly = true;
+            _txtMultiplier.ReadOnly = true;
+            _txtOffset.ReadOnly = true;
+            _txtBitMask.ReadOnly = true;
+            _txtDeadBand.ReadOnly = true;
         }
 
         private int? GetSelectedGroupId()
