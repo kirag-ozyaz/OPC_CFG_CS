@@ -264,13 +264,14 @@ namespace OPC_CFGCS.UI.Controls
             var searchLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 2,
+                ColumnCount = 3,
                 RowCount = 1,
                 Margin = Padding.Empty,
                 Padding = new Padding(4, 4, 4, 2)
             };
             searchLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80F));
             searchLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            searchLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 28F));
             searchLayout.Controls.Add(new Label
             {
                 Text = "Подстанция:",
@@ -286,6 +287,17 @@ namespace OPC_CFGCS.UI.Controls
             };
             _txtAreaSearch.TextChanged += OnAreaSearchChanged;
             searchLayout.Controls.Add(_txtAreaSearch, 1, 0);
+
+            var btnClearAreaSearch = new Button
+            {
+                Text = "×",
+                Dock = DockStyle.Fill,
+                Margin = new Padding(4, 2, 0, 0),
+                TabStop = false,
+                FlatStyle = FlatStyle.Standard
+            };
+            btnClearAreaSearch.Click += OnClearAreaSearchClick;
+            searchLayout.Controls.Add(btnClearAreaSearch, 2, 0);
 
             listSplit.Panel1.Controls.Add(searchLayout);
             listSplit.Panel2.Controls.Add(_grid);
@@ -350,6 +362,17 @@ namespace OPC_CFGCS.UI.Controls
         private void OnAreaSearchChanged(object sender, EventArgs e)
         {
             ApplyAreaFilter();
+        }
+
+        private void OnClearAreaSearchClick(object sender, EventArgs e)
+        {
+            if (_txtAreaSearch == null || _txtAreaSearch.Text.Length == 0)
+            {
+                return;
+            }
+
+            _txtAreaSearch.Text = string.Empty;
+            _txtAreaSearch.Focus();
         }
 
         private void RefreshTagsPreserveSelection(int tagId)
