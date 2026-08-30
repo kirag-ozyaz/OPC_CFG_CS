@@ -10,6 +10,10 @@ using OPC_CFGCS.UI;
 
 namespace OPC_CFGCS.UI.Controls
 {
+    /// <summary>
+    /// Панель со списком объектов схемы (ПС, шина, выключатель) в DataGridView.
+    /// Подсвечивает строки объектов, для которых уже заданы связи с тегами.
+    /// </summary>
     public sealed class SchemaObjectPanel : UserControl
     {
         private readonly SchemaObjectType _objectType;
@@ -18,13 +22,28 @@ namespace OPC_CFGCS.UI.Controls
         private BindingList<SchemaObject> _items;
         private HashSet<int> _boundObjectIds = new HashSet<int>();
 
+        /// <summary>Вызывается при изменении выбранного объекта в списке.</summary>
         public event EventHandler CurrentObjectChanged;
 
+        /// <summary>Текст последней ошибки загрузки данных из базы.</summary>
         public string LastLoadError => _repository.LastError;
 
+        /// <summary>Конструктор для WinForms-дизайнера (тип по умолчанию — ПС).</summary>
+        public SchemaObjectPanel()
+        {
+            _objectType = SchemaObjectType.PowerStation;
+            InitializePanel();
+        }
+
+        /// <summary>Создаёт панель для указанного типа объектов схемы.</summary>
         public SchemaObjectPanel(SchemaObjectType objectType)
         {
             _objectType = objectType;
+            InitializePanel();
+        }
+
+        private void InitializePanel()
+        {
             Dock = DockStyle.Fill;
 
             _grid.Dock = DockStyle.Fill;
@@ -47,6 +66,10 @@ namespace OPC_CFGCS.UI.Controls
             _grid.DataSource = _items;
         }
 
+        private bool IsDesignMode =>
+            LicenseManager.UsageMode == LicenseUsageMode.Designtime || DesignMode;
+
+        /// <summary>Текущий выбранный объект в гриде.</summary>
         public SchemaObject CurrentObject
         {
             get
@@ -60,8 +83,14 @@ namespace OPC_CFGCS.UI.Controls
             }
         }
 
+        /// <summary>Перезагружает список объектов, сохраняя выделение по Id.</summary>
         public void Reload()
         {
+            if (IsDesignMode)
+            {
+                return;
+            }
+
             var selectedId = CurrentObject == null ? (int?)null : CurrentObject.Id;
             LoadData();
             if (selectedId.HasValue)
@@ -70,14 +99,25 @@ namespace OPC_CFGCS.UI.Controls
             }
         }
 
+        /// <summary>Обновляет подсветку строк объектов с существующими связями тегов.</summary>
         public void RefreshBindingHighlights()
         {
+            if (IsDesignMode)
+            {
+                return;
+            }
+
             _boundObjectIds = _repository.GetBoundObjectIds();
             _grid.Invalidate();
         }
 
         private void LoadData()
         {
+            if (IsDesignMode)
+            {
+                return;
+            }
+
             _boundObjectIds = _repository.GetBoundObjectIds();
 
             switch (_objectType)

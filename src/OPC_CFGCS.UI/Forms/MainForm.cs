@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -9,22 +10,22 @@ using OPC_CFGCS.UI.Controls;
 
 namespace OPC_CFGCS.UI.Forms
 {
+    /// <summary>
+    /// Главная форма приложения: подключение к OPC_Config и GES, связывание OPC-тегов с объектами схемы.
+    /// </summary>
     public sealed partial class MainForm : Form
     {
         private SchemaObjectType _currentSchemaType = SchemaObjectType.PowerStation;
         private IList<RecentConnectionEntry> _recentConnections = new List<RecentConnectionEntry>();
+        private SchemaObjectPanel psPanel;
+        private SchemaObjectPanel busPanel;
+        private SchemaObjectPanel switchPanel;
+        private TagsPanel tagsPanel;
 
         public MainForm()
         {
-            psPanel = new SchemaObjectPanel(SchemaObjectType.PowerStation);
-            busPanel = new SchemaObjectPanel(SchemaObjectType.CellBus);
-            switchPanel = new SchemaObjectPanel(SchemaObjectType.CellSwitch);
-
             InitializeComponent();
-
-            psPanel.CurrentObjectChanged += OnSchemaObjectChanged;
-            busPanel.CurrentObjectChanged += OnSchemaObjectChanged;
-            switchPanel.CurrentObjectChanged += OnSchemaObjectChanged;
+            InitializeCustomControls();
 
             LoadApplicationIcons();
             bindButtonPanel.Resize += (s, e) => CenterBindButton();
@@ -33,6 +34,61 @@ namespace OPC_CFGCS.UI.Forms
             cmbConnectionString.SelectedIndexChanged += OnOpcConnectionHistorySelected;
             mainWorkPanel.Enabled = false;
             InitializeMenu();
+        }
+
+        /// <summary>
+        /// Создаёт кастомные панели во время выполнения и заменяет подсказки из дизайнера.
+        /// В режиме дизайнера не выполняется — на форме остаются placeholder-Label.
+        /// </summary>
+        private void InitializeCustomControls()
+        {
+            if (LicenseManager.UsageMode == LicenseUsageMode.Designtime)
+            {
+                return;
+            }
+
+            psPanel = new SchemaObjectPanel(SchemaObjectType.PowerStation);
+            psPanel.Name = "psPanel";
+            ReplacePlaceholder(tabPs, lblPsPlaceholder, psPanel);
+            psPanel.CurrentObjectChanged += OnSchemaObjectChanged;
+
+            busPanel = new SchemaObjectPanel(SchemaObjectType.CellBus);
+            busPanel.Name = "busPanel";
+            ReplacePlaceholder(tabBus, lblBusPlaceholder, busPanel);
+            busPanel.CurrentObjectChanged += OnSchemaObjectChanged;
+
+            switchPanel = new SchemaObjectPanel(SchemaObjectType.CellSwitch);
+            switchPanel.Name = "switchPanel";
+            ReplacePlaceholder(tabSwitch, lblSwitchPlaceholder, switchPanel);
+            switchPanel.CurrentObjectChanged += OnSchemaObjectChanged;
+
+            tagsPanel = new TagsPanel(false);
+            tagsPanel.Name = "tagsPanel";
+            tagsPanel.TagChanged += OnTagChanged;
+            ReplacePlaceholderInTable(gridsLayout, lblTagsPlaceholder, tagsPanel, 2, 0);
+        }
+
+        /// <summary>Удаляет placeholder и добавляет реальный контрол в обычный контейнер.</summary>
+        private static void ReplacePlaceholder(Control parent, Label placeholder, Control replacement)
+        {
+            parent.Controls.Remove(placeholder);
+            placeholder.Dispose();
+            replacement.Dock = DockStyle.Fill;
+            parent.Controls.Add(replacement);
+        }
+
+        /// <summary>Удаляет placeholder и добавляет реальный контрол в ячейку TableLayoutPanel.</summary>
+        private static void ReplacePlaceholderInTable(
+            TableLayoutPanel table,
+            Label placeholder,
+            Control replacement,
+            int column,
+            int row)
+        {
+            table.Controls.Remove(placeholder);
+            placeholder.Dispose();
+            replacement.Dock = DockStyle.Fill;
+            table.Controls.Add(replacement, column, row);
         }
 
         private void LoadRecentConnections()

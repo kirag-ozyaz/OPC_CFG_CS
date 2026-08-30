@@ -5,12 +5,16 @@ using System.Xml;
 
 namespace OPC_CFGCS.UI
 {
+    /// <summary>Пара строк подключения OPC_Config и GES из истории.</summary>
     public sealed class RecentConnectionEntry
     {
         public string OpcConfig { get; set; }
         public string Ges { get; set; }
     }
 
+    /// <summary>
+    /// Сохранение и загрузка истории подключений к базам OPC_Config и GES (XML в %AppData%\OPC_CFGCS).
+    /// </summary>
     public static class RecentConnectionsStore
     {
         private const int MaxEntries = 12;

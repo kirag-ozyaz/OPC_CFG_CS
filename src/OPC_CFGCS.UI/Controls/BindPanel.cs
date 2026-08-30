@@ -8,6 +8,9 @@ using OPC_CFGCS.Data.Models;
 
 namespace OPC_CFGCS.UI.Controls
 {
+    /// <summary>
+    /// Нижняя панель главной формы: список OPC-тегов (Area, Source) связанных с выбранным объектом схемы.
+    /// </summary>
     public sealed class BindPanel : UserControl
     {
         private readonly SqlRepository _repository = new SqlRepository();
@@ -27,11 +30,13 @@ namespace OPC_CFGCS.UI.Controls
             Controls.Add(_grid);
         }
 
+        /// <summary>Показывает связи тегов для объекта схемы с указанным Id.</summary>
         public void ShowBindings(int objectId)
         {
             _grid.DataSource = new BindingList<TagBinding>(_repository.GetBindingsByObjectId(objectId));
         }
 
+        /// <summary>Очищает грид связей.</summary>
         public void ClearBindings()
         {
             _grid.DataSource = new BindingList<TagBinding>();

@@ -11,6 +11,11 @@ using OPC_CFGCS.UI;
 
 namespace OPC_CFGCS.UI.Controls
 {
+    /// <summary>
+    /// Панель OPC-тегов: грид, фильтр по Area и редактор полей тега.
+    /// На главной форме используется в режиме только просмотра и связывания с объектами схемы;
+    /// в OPC_CFGCS.UI.Forms.TagsEditForm — с полным редактированием.
+    /// </summary>
     public sealed class TagsPanel : UserControl
     {
         private readonly SqlRepository _repository = new SqlRepository();
@@ -41,8 +46,10 @@ namespace OPC_CFGCS.UI.Controls
 
         private readonly bool _editable;
 
+        /// <summary>Вызывается после изменения связи тега с объектом схемы.</summary>
         public event EventHandler TagChanged;
 
+        /// <param name="editable">true — режим редактирования тегов; false — только просмотр и связывание.</param>
         public TagsPanel(bool editable = true)
         {
             _editable = editable;
@@ -61,14 +68,17 @@ namespace OPC_CFGCS.UI.Controls
             }
         }
 
+        /// <summary>Загружает справочники и список тегов из базы.</summary>
         public void ReloadData()
         {
             LoadLookups();
             LoadTags();
         }
 
+        /// <summary>Текст последней ошибки доступа к базе.</summary>
         public string LastLoadError => _repository.LastError;
 
+        /// <summary>Текущий выбранный тег в гриде.</summary>
         public Tag CurrentTag
         {
             get
@@ -82,12 +92,14 @@ namespace OPC_CFGCS.UI.Controls
             }
         }
 
+        /// <summary>Задаёт тип объекта схемы для отображения состояния связи тега.</summary>
         public void SetSchemaObjectType(SchemaObjectType schemaObjectType)
         {
             _schemaObjectType = schemaObjectType;
             RefreshCurrentTagState();
         }
 
+        /// <summary>Связывает текущий тег с объектом схемы.</summary>
         public void BindToObject(int objectId)
         {
             var tag = CurrentTag;
@@ -107,6 +119,7 @@ namespace OPC_CFGCS.UI.Controls
             TagChanged?.Invoke(this, EventArgs.Empty);
         }
 
+        /// <summary>Удаляет связь текущего тега с объектом схемы.</summary>
         public void UnbindObject()
         {
             var tag = CurrentTag;
@@ -126,6 +139,7 @@ namespace OPC_CFGCS.UI.Controls
             TagChanged?.Invoke(this, EventArgs.Empty);
         }
 
+        /// <summary>Есть ли связь текущего тега с объектом схемы.</summary>
         public bool HasObjectBinding
         {
             get
@@ -135,11 +149,13 @@ namespace OPC_CFGCS.UI.Controls
             }
         }
 
+        /// <summary>Обновляет отображение состояния связи для текущего тега.</summary>
         public void RefreshTagState()
         {
             RefreshCurrentTagState();
         }
 
+        /// <summary>Выбирает в гриде первый тег, связанный с указанным объектом схемы.</summary>
         public void SelectFirstBoundTag(int objectId)
         {
             var tag = _allTags.FirstOrDefault(item => item.ObjectId.HasValue && item.ObjectId.Value == objectId);

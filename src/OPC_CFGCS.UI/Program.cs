@@ -5,6 +5,7 @@ using OPC_CFGCS.UI.Forms;
 
 namespace OPC_CFGCS.UI
 {
+    /// <summary>Точка входа WinForms-приложения OPC_CFGCS.</summary>
     internal static class Program
     {
         [STAThread]

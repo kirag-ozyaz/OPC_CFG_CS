@@ -9,6 +9,9 @@ using OPC_CFGCS.Data.Models;
 
 namespace OPC_CFGCS.UI.Forms
 {
+    /// <summary>
+    /// Диалог редактирования справочников: Alias, типы OPC, серверы, параметры и группы.
+    /// </summary>
     public sealed class ReferenceDataForm : Form
     {
         private readonly SqlRepository _repository = new SqlRepository();

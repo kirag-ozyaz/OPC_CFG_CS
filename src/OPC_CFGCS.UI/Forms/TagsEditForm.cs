@@ -6,6 +6,7 @@ using OPC_CFGCS.UI.Controls;
 
 namespace OPC_CFGCS.UI.Forms
 {
+    /// <summary>Диалог полного редактирования OPC-тегов (меню «Данные → Заполнение тегов»).</summary>
     public sealed class TagsEditForm : Form
     {
         private readonly TagsPanel _tagsPanel = new TagsPanel();
