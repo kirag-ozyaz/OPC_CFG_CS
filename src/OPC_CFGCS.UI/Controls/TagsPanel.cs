@@ -16,6 +16,7 @@ namespace OPC_CFGCS.UI.Controls
         private readonly DataGridView _grid = new DataGridView();
         private readonly Panel _editorPanel = new Panel();
         private readonly CheckBox _chkEdit = new CheckBox { Text = "Редактирование" };
+        private readonly Button _btnAdd = new Button { Text = "Добавить", AutoSize = true };
         private readonly Button _btnSave = new Button { Text = "Сохранить", Enabled = false };
         private readonly ComboBox _cmbServer = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
         private readonly ComboBox _cmbGroup = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
@@ -149,14 +150,13 @@ namespace OPC_CFGCS.UI.Controls
             _grid.ReadOnly = true;
             _grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             _grid.MultiSelect = false;
-            _grid.AllowUserToAddRows = true;
+            _grid.AllowUserToAddRows = false;
             _grid.AutoGenerateColumns = false;
             _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Area", HeaderText = "Area", Width = 120 });
             _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Source", HeaderText = "Source", Width = 160 });
             _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ItemName", HeaderText = "ItemName", Width = 160 });
             _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerName", HeaderText = "Server", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
             _grid.SelectionChanged += OnTagSelectionChanged;
-            _grid.UserAddedRow += OnUserAddedRow;
             _grid.KeyDown += OnGridKeyDown;
             _grid.CellFormatting += OnGridCellFormatting;
 
@@ -185,10 +185,12 @@ namespace OPC_CFGCS.UI.Controls
             if (_editable)
             {
                 var buttonsPanel = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true };
+                buttonsPanel.Controls.Add(_btnAdd);
+                buttonsPanel.Controls.Add(_btnSave);
                 buttonsPanel.Controls.Add(_chkEdit);
                 buttonsPanel.Controls.Add(_chkNormalState);
-                buttonsPanel.Controls.Add(_btnSave);
 
+                _btnAdd.Click += OnAddClick;
                 _chkEdit.CheckedChanged += (s, e) => SetEditMode(_chkEdit.Checked);
                 _btnSave.Click += OnSaveClick;
                 _cmbServer.SelectedIndexChanged += OnServerChanged;
@@ -203,7 +205,6 @@ namespace OPC_CFGCS.UI.Controls
 
             if (!_editable)
             {
-                _grid.AllowUserToAddRows = false;
                 split.SplitterDistance = 280;
             }
 
@@ -259,6 +260,11 @@ namespace OPC_CFGCS.UI.Controls
 
         private void OnTagSelectionChanged(object sender, EventArgs e)
         {
+            if (_isInserting && _grid.SelectedRows.Count > 0)
+            {
+                _isInserting = false;
+            }
+
             RefreshCurrentTagState();
             TagChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -333,10 +339,25 @@ namespace OPC_CFGCS.UI.Controls
             _chkNormalState.Checked = false;
         }
 
-        private void OnUserAddedRow(object sender, DataGridViewRowEventArgs e)
+        private void OnAddClick(object sender, EventArgs e)
         {
+            _grid.ClearSelection();
             _isInserting = true;
+            _groupChanged = false;
+            ClearDetailFields();
+            _chkEdit.Checked = true;
             SetEditMode(true);
+
+            if (_cmbServer.Items.Count > 0)
+            {
+                _cmbServer.SelectedIndex = 0;
+            }
+
+            _txtMultiplier.Text = "1";
+            _txtOffset.Text = "0";
+            _txtBitMask.Text = "0";
+            _txtDeadBand.Text = "0";
+            _txtArea.Focus();
         }
 
         private void OnSaveClick(object sender, EventArgs e)
@@ -412,12 +433,16 @@ namespace OPC_CFGCS.UI.Controls
         private void OnGroupDropDown(object sender, EventArgs e)
         {
             var tag = CurrentTag;
-            if (tag == null)
+            if (tag != null)
             {
+                ReloadGroups(tag.ServerId);
                 return;
             }
 
-            ReloadGroups(tag.ServerId);
+            if (_cmbServer.SelectedValue is int serverId)
+            {
+                ReloadGroups(serverId);
+            }
         }
 
         private void ReloadGroups(int serverId)
