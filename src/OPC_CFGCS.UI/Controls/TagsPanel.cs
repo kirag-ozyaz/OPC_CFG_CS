@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
@@ -168,12 +169,23 @@ namespace OPC_CFGCS.UI.Controls
             _grid.KeyDown += OnGridKeyDown;
             _grid.CellFormatting += OnGridCellFormatting;
 
-            var gridHost = new Panel { Dock = DockStyle.Fill };
+            var gridHost = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = _editable ? 1 : 2,
+                Padding = new Padding(0)
+            };
+            gridHost.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
             if (!_editable)
             {
+                gridHost.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                gridHost.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+
                 var searchPanel = new TableLayoutPanel
                 {
-                    Dock = DockStyle.Top,
+                    Dock = DockStyle.Fill,
                     AutoSize = true,
                     ColumnCount = 2,
                     Padding = new Padding(4, 4, 4, 2)
@@ -192,12 +204,13 @@ namespace OPC_CFGCS.UI.Controls
                 _txtAreaSearch.TextChanged += OnAreaSearchChanged;
                 searchPanel.Controls.Add(_txtAreaSearch, 1, 0);
 
-                gridHost.Controls.Add(searchPanel);
-                gridHost.Controls.Add(_grid);
+                gridHost.Controls.Add(searchPanel, 0, 0);
+                gridHost.Controls.Add(_grid, 0, 1);
             }
             else
             {
-                gridHost.Controls.Add(_grid);
+                gridHost.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+                gridHost.Controls.Add(_grid, 0, 0);
             }
 
             split.Panel1.Controls.Add(gridHost);
