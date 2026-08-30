@@ -65,6 +65,91 @@ OPC → Конфигуратор (панель) | Заполнение тего�
 
 **OpcCfgcsWorkspace:** UserControl — `Dock = Fill`, `hostPanel.Controls.Add(workspace)`.
 
+## Добавление пунктов в MenuStrip хоста
+
+Библиотека **не создаёт** меню — пункты добавляете в **главную форму хоста** (дизайнер или код) и в обработчиках вызываете методы **одной** сессии `OpcCfgcsSession`.
+
+### 1. Поле сессии
+
+Создайте сессию при загрузке формы (или при первом входе в раздел OPC):
+
+```csharp
+private OpcCfgcsSession _opcSession;
+
+private void HostMainForm_Load(object sender, EventArgs e)
+{
+    _opcSession = OpcCfgcsHost.CreateSession(new OpcCfgcsSessionOptions { AutoConnect = true });
+    InitializeOpcMenu();
+}
+```
+
+### 2. Пункты меню (код)
+
+Аналог standalone: `MainForm.InitializeMenu()` в `src/OPC_CFGCS.UI/Forms/MainForm.cs`.
+
+```csharp
+private void InitializeOpcMenu()
+{
+    var opcMenu = new ToolStripMenuItem("OPC");
+    menuStrip1.Items.Add(opcMenu);
+
+    var configuratorItem = new ToolStripMenuItem("Конфигуратор...");
+    configuratorItem.Click += OnOpcConfiguratorMenuClick;
+    opcMenu.DropDownItems.Add(configuratorItem);
+
+    var tagsItem = new ToolStripMenuItem("Заполнение тегов...");
+    tagsItem.Click += (s, e) => _opcSession.ShowTagsEditor(this);
+    opcMenu.DropDownItems.Add(tagsItem);
+
+    var referenceItem = new ToolStripMenuItem("Справочники...");
+    referenceItem.Click += (s, e) => _opcSession.ShowReferenceData(this);
+    opcMenu.DropDownItems.Add(referenceItem);
+}
+```
+
+Три пункта на одном уровне главного меню (без подменю «OPC»):
+
+```csharp
+var itemConfigurator = new ToolStripMenuItem("Конфигуратор OPC...");
+itemConfigurator.Click += OnOpcConfiguratorMenuClick;
+menuStrip1.Items.Add(itemConfigurator);
+
+var itemTags = new ToolStripMenuItem("Заполнение тегов OPC...");
+itemTags.Click += (s, e) => _opcSession.ShowTagsEditor(this);
+menuStrip1.Items.Add(itemTags);
+
+var itemRef = new ToolStripMenuItem("Справочники OPC...");
+itemRef.Click += (s, e) => _opcSession.ShowReferenceData(this);
+menuStrip1.Items.Add(itemRef);
+```
+
+### 3. Обработчик «Конфигуратор»
+
+Показывает вкладку/панель и вставляет `OpcCfgcsWorkspace` (один раз на сессию):
+
+```csharp
+private void OnOpcConfiguratorMenuClick(object sender, EventArgs e)
+{
+    opcTabPage.Visible = true; // или tabControl.SelectedTab = opcTabPage;
+    opcHostPanel.Controls.Clear();
+    var workspace = _opcSession.CreateWorkspace();
+    workspace.Dock = DockStyle.Fill;
+    opcHostPanel.Controls.Add(workspace);
+}
+```
+
+`opcHostPanel` — `Panel` / `TabPage` на форме хоста, `Dock = Fill`.
+
+### Соответствие пунктов и API
+
+| Пункт меню | Вызов сессии |
+|------------|----------------|
+| Конфигуратор | `CreateWorkspace()` + добавить на панель |
+| Заполнение тегов | `ShowTagsEditor(this)` |
+| Справочники | `ShowReferenceData(this)` |
+
+`ShowTagsEditor` / `ShowReferenceData` внутри проверяют `IsConnected` и при необходимости показывают «Сначала подключитесь…». Для диалогов передайте форму хоста как `IWin32Window` (`this`).
+
 ## Примеры
 
 Минимальный сценарий:
