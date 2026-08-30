@@ -29,8 +29,10 @@ namespace OPC_CFGCS.UI.Controls
         private readonly TextBox _txtBitMask = new TextBox();
         private readonly TextBox _txtDeadBand = new TextBox();
         private readonly CheckBox _chkNormalState = new CheckBox { Text = "Норм. состояние" };
+        private TextBox _txtAreaSearch;
 
         private BindingList<Tag> _tags;
+        private IList<Tag> _allTags = new List<Tag>();
         private BindingList<Tag2Group> _tag2Groups;
         private bool _isInserting;
         private bool _groupChanged;
@@ -152,7 +154,13 @@ namespace OPC_CFGCS.UI.Controls
             _grid.MultiSelect = false;
             _grid.AllowUserToAddRows = false;
             _grid.AutoGenerateColumns = false;
-            _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Area", HeaderText = "Area", Width = 120 });
+            var areaColumn = new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "Area",
+                HeaderText = _editable ? "Area" : "Подстанция",
+                Width = 120
+            };
+            _grid.Columns.Add(areaColumn);
             _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Source", HeaderText = "Source", Width = 160 });
             _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ItemName", HeaderText = "ItemName", Width = 160 });
             _grid.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ServerName", HeaderText = "Server", AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
@@ -160,7 +168,39 @@ namespace OPC_CFGCS.UI.Controls
             _grid.KeyDown += OnGridKeyDown;
             _grid.CellFormatting += OnGridCellFormatting;
 
-            split.Panel1.Controls.Add(_grid);
+            var gridHost = new Panel { Dock = DockStyle.Fill };
+            if (!_editable)
+            {
+                var searchPanel = new TableLayoutPanel
+                {
+                    Dock = DockStyle.Top,
+                    AutoSize = true,
+                    ColumnCount = 2,
+                    Padding = new Padding(4, 4, 4, 2)
+                };
+                searchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
+                searchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                searchPanel.Controls.Add(new Label
+                {
+                    Text = "Подстанция:",
+                    AutoSize = true,
+                    Anchor = AnchorStyles.Left,
+                    Margin = new Padding(3, 6, 8, 3)
+                }, 0, 0);
+
+                _txtAreaSearch = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(3, 3, 3, 3) };
+                _txtAreaSearch.TextChanged += OnAreaSearchChanged;
+                searchPanel.Controls.Add(_txtAreaSearch, 1, 0);
+
+                gridHost.Controls.Add(_grid);
+                gridHost.Controls.Add(searchPanel);
+            }
+            else
+            {
+                gridHost.Controls.Add(_grid);
+            }
+
+            split.Panel1.Controls.Add(gridHost);
 
             _editorPanel.Dock = DockStyle.Fill;
             _editorPanel.Padding = new Padding(8);
@@ -236,14 +276,37 @@ namespace OPC_CFGCS.UI.Controls
 
         private void LoadTags()
         {
-            _tags = new BindingList<Tag>(_repository.GetTags());
+            _allTags = _repository.GetTags();
+            ApplyAreaFilter();
+        }
+
+        private void ApplyAreaFilter()
+        {
+            IEnumerable<Tag> filtered = _allTags;
+            if (!_editable && _txtAreaSearch != null)
+            {
+                var searchText = _txtAreaSearch.Text.Trim();
+                if (searchText.Length > 0)
+                {
+                    filtered = _allTags.Where(tag =>
+                        tag.Area != null &&
+                        tag.Area.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0);
+                }
+            }
+
+            _tags = new BindingList<Tag>(filtered.ToList());
             _grid.DataSource = _tags;
+        }
+
+        private void OnAreaSearchChanged(object sender, EventArgs e)
+        {
+            ApplyAreaFilter();
         }
 
         private void RefreshTagsPreserveSelection(int tagId)
         {
-            _tags = new BindingList<Tag>(_repository.GetTags());
-            _grid.DataSource = _tags;
+            _allTags = _repository.GetTags();
+            ApplyAreaFilter();
             _tag2Groups = new BindingList<Tag2Group>(_repository.GetTag2Groups());
 
             foreach (DataGridViewRow row in _grid.Rows)
@@ -271,6 +334,11 @@ namespace OPC_CFGCS.UI.Controls
 
         private void RefreshCurrentTagState()
         {
+            if (_isInserting)
+            {
+                return;
+            }
+
             var tag = CurrentTag;
             if (tag == null)
             {
@@ -341,9 +409,9 @@ namespace OPC_CFGCS.UI.Controls
 
         private void OnAddClick(object sender, EventArgs e)
         {
-            _grid.ClearSelection();
             _isInserting = true;
             _groupChanged = false;
+            _grid.ClearSelection();
             ClearDetailFields();
             _chkEdit.Checked = true;
             SetEditMode(true);
