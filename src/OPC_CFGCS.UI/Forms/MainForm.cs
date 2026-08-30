@@ -12,6 +12,7 @@ namespace OPC_CFGCS.UI.Forms
     public sealed partial class MainForm : Form
     {
         private SchemaObjectType _currentSchemaType = SchemaObjectType.PowerStation;
+        private IList<RecentConnectionEntry> _recentConnections = new List<RecentConnectionEntry>();
 
         public MainForm()
         {
@@ -28,10 +29,65 @@ namespace OPC_CFGCS.UI.Forms
             LoadApplicationIcons();
             bindButtonPanel.Resize += (s, e) => CenterBindButton();
             CenterBindButton();
-            txtConnectionString.Text = DatabaseConnection.ConnectionString;
-            txtGesConnectionString.Text = DatabaseConnection.GesConnectionString;
+            LoadRecentConnections();
+            cmbConnectionString.SelectedIndexChanged += OnOpcConnectionHistorySelected;
             mainWorkPanel.Enabled = false;
             InitializeMenu();
+        }
+
+        private void LoadRecentConnections()
+        {
+            _recentConnections = RecentConnectionsStore.Load();
+
+            cmbConnectionString.Items.Clear();
+            cmbGesConnectionString.Items.Clear();
+
+            foreach (var entry in _recentConnections)
+            {
+                if (!string.IsNullOrWhiteSpace(entry.OpcConfig) && !cmbConnectionString.Items.Contains(entry.OpcConfig))
+                {
+                    cmbConnectionString.Items.Add(entry.OpcConfig);
+                }
+
+                if (!string.IsNullOrWhiteSpace(entry.Ges) && !cmbGesConnectionString.Items.Contains(entry.Ges))
+                {
+                    cmbGesConnectionString.Items.Add(entry.Ges);
+                }
+            }
+
+            if (_recentConnections.Count > 0)
+            {
+                var last = _recentConnections[0];
+                cmbConnectionString.Text = last.OpcConfig;
+                cmbGesConnectionString.Text = last.Ges;
+                return;
+            }
+
+            cmbConnectionString.Text = DatabaseConnection.ConnectionString;
+            cmbGesConnectionString.Text = DatabaseConnection.GesConnectionString;
+        }
+
+        private void OnOpcConnectionHistorySelected(object sender, EventArgs e)
+        {
+            if (cmbConnectionString.SelectedIndex < 0)
+            {
+                return;
+            }
+
+            var opcConfig = cmbConnectionString.SelectedItem as string;
+            if (string.IsNullOrWhiteSpace(opcConfig))
+            {
+                return;
+            }
+
+            foreach (var entry in _recentConnections)
+            {
+                if (string.Equals(entry.OpcConfig, opcConfig, StringComparison.OrdinalIgnoreCase))
+                {
+                    cmbGesConnectionString.Text = entry.Ges;
+                    break;
+                }
+            }
         }
 
         private void InitializeMenu()
@@ -118,8 +174,10 @@ namespace OPC_CFGCS.UI.Forms
 
         private void OnConnectClick(object sender, EventArgs e)
         {
-            DatabaseConnection.ConnectionString = txtConnectionString.Text.Trim();
-            DatabaseConnection.GesConnectionString = txtGesConnectionString.Text.Trim();
+            var opcConnectionString = cmbConnectionString.Text.Trim();
+            var gesConnectionString = cmbGesConnectionString.Text.Trim();
+            DatabaseConnection.ConnectionString = opcConnectionString;
+            DatabaseConnection.GesConnectionString = gesConnectionString;
 
             if (!DatabaseConnection.TestConnection(out var error))
             {
@@ -150,6 +208,9 @@ namespace OPC_CFGCS.UI.Forms
             lblConnectionStatus.Text = "Подключено";
             lblConnectionStatus.ForeColor = Color.DarkGreen;
             mainWorkPanel.Enabled = true;
+
+            RecentConnectionsStore.SaveRecent(opcConnectionString, gesConnectionString);
+            LoadRecentConnections();
 
             var loadErrors = new List<string>();
 
