@@ -48,10 +48,10 @@ OPC_CFGCS.sln
 
 ```xml
 <add name="OpcConfig"
-     connectionString="Data Source=ULGES-SQL2;Initial Catalog=OPC_Config;Integrated Security=True"
+     connectionString="Data Source=XXX-SQL2;Initial Catalog=OPC_Config;Integrated Security=True"
      providerName="System.Data.SqlClient" />
 <add name="Ges"
-     connectionString="Data Source=ULGES-SQL2;Initial Catalog=GES;Integrated Security=True"
+     connectionString="Data Source=XXX-SQL2;Initial Catalog=GES;Integrated Security=True"
      providerName="System.Data.SqlClient" />
 ```
 
